@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "266372417570",
+    "project_id": "app1000banks",
+    "storage_bucket": "app1000banks.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266372417570:android:ab404dec16617d5e8fe27b",
+        "android_client_info": {
+          "package_name": "com.example.banks1000"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "266372417570-v66lv7q3q5d6bv0m64l1b41co07kbp3d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.banks1000",
+            "certificate_hash": "2cfb8aa66498c5ce9d051166a2d667de35a1959b"
+          }
+        },
+        {
+          "client_id": "266372417570-14odfjhtlcdqb7hq8omckvvjo4ee8u3d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUMRkWn_0Hhhqm6KEWAkgA6ALq2TH0N4w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "266372417570-14odfjhtlcdqb7hq8omckvvjo4ee8u3d.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "266372417570-u5u48rdmp0iomibc9l8gig2t973cs3oj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.1000banks"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
