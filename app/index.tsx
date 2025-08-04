@@ -19,7 +19,7 @@ const { width } = Dimensions.get('window');
 export default function HomeScreen() {
   const [showSplash, setShowSplash] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('courses');
+  const [activeTab, setActiveTab] = useState('home');
 
   const handleGetStarted = () => {
     router.push('/auth');
@@ -35,11 +35,150 @@ export default function HomeScreen() {
 
   // Sample merch data
   const merchData = [
-    { id: '1', name: '1000Banks Hoodie', price: '$49.99', image: '👕' },
-    { id: '2', name: 'Financial Freedom Mug', price: '$19.99', image: '☕' },
-    { id: '3', name: 'Entrepreneur Cap', price: '$24.99', image: '🧢' },
-    { id: '4', name: 'Success Journal', price: '$29.99', image: '📔' },
+    { id: '1', name: '1000Banks Hoodie', price: '$49.99', image: '👕', description: 'Premium quality hoodie with 1000Banks logo' },
+    { id: '2', name: 'Financial Freedom Mug', price: '$19.99', image: '☕', description: 'Start your day with motivation' },
+    { id: '3', name: 'Entrepreneur Cap', price: '$24.99', image: '🧢', description: 'Stylish cap for the modern entrepreneur' },
+    { id: '4', name: 'Success Journal', price: '$29.99', image: '📔', description: 'Track your journey to financial freedom' },
+    { id: '5', name: 'Investment Tee', price: '$24.99', image: '👔', description: 'Comfortable cotton tee with inspiring quotes' },
+    { id: '6', name: 'Wealth Mindset Book', price: '$34.99', image: '📚', description: 'Essential reading for financial success' },
+    { id: '7', name: 'Money Tracker Planner', price: '$39.99', image: '📅', description: 'Organize your finances effectively' },
+    { id: '8', name: 'Motivational Water Bottle', price: '$22.99', image: '💧', description: 'Stay hydrated, stay motivated' },
   ];
+
+  const renderHomeContent = () => (
+    <>
+      {/* Hero Section */}
+      <View style={styles.heroSection}>
+        <Text style={styles.heroTitle}>Manifesting Positive Vision</Text>
+        <Text style={styles.heroSubtitle}>
+          Embracing Focus and{'\n'}Purpose in Our Brand Culture
+        </Text>
+        <Text style={styles.heroDescription}>
+          Our program empowers entrepreneurs to invest, plan, and budget 
+          effectively while developing corporate dropout plans.
+        </Text>
+        <TouchableOpacity style={styles.joinCommunityButton}>
+          <Text style={styles.joinCommunityButtonText}>Join the Community</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Founder Quote */}
+      <View style={styles.founderQuoteSection}>
+        <Text style={styles.quoteText}>
+          "If opportunity doesn't come knocking, BUILD A DOOR."
+        </Text>
+        <Text style={styles.founderName}>Devonne Stokes</Text>
+        <Text style={styles.founderTitle}>Financial Freedom Expert</Text>
+      </View>
+
+      {/* Video Section */}
+      <View style={styles.videoSection}>
+        <Text style={styles.videoHeading}>Financial</Text>
+        <View style={styles.videoContainer}>
+          <View style={styles.videoPlaceholder}>
+            <Text style={styles.videoPlayButton}>▶️</Text>
+            <Text style={styles.videoText}>Video Content</Text>
+          </View>
+          <View style={styles.breakthroughTextContainer}>
+            <Text style={styles.breakthroughText}>BREAKTHROUGH</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Academy Section */}
+      <View style={styles.academySection}>
+        <Text style={styles.academyText}>Want to know more about us?</Text>
+        <Text style={styles.joinText}>JOIN OUR</Text>
+        <Text style={styles.academyTitle}>ACADEMY</Text>
+        <Text style={styles.comingSoonText}>coming soon</Text>
+      </View>
+
+      {/* Merch Preview Section */}
+      <View style={styles.merchSection}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Our Merchandise</Text>
+          <TouchableOpacity onPress={() => setActiveTab('shop')}>
+            <Text style={styles.shopNowText}>Shop Now</Text>
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          data={merchData.slice(0, 4)}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.merchCard}>
+              <Text style={styles.merchImage}>{item.image}</Text>
+              <Text style={styles.merchName}>{item.name}</Text>
+              <Text style={styles.merchPrice}>{item.price}</Text>
+            </View>
+          )}
+          contentContainerStyle={styles.merchList}
+        />
+      </View>
+    </>
+  );
+
+  const renderShopContent = () => (
+    <View style={styles.shopContainer}>
+      <View style={styles.shopHeader}>
+        <Text style={styles.shopTitle}>1000Banks Merchandise</Text>
+        <Text style={styles.shopSubtitle}>Premium quality items to support your journey</Text>
+      </View>
+      
+      <FlatList
+        data={merchData}
+        numColumns={2}
+        showsVerticalScrollIndicator={false}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.shopItemCard}>
+            <Text style={styles.shopItemImage}>{item.image}</Text>
+            <Text style={styles.shopItemName}>{item.name}</Text>
+            <Text style={styles.shopItemDescription}>{item.description}</Text>
+            <Text style={styles.shopItemPrice}>{item.price}</Text>
+            <TouchableOpacity style={styles.addToCartButton}>
+              <Text style={styles.addToCartText}>Add to Cart</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        contentContainerStyle={styles.shopGrid}
+        columnWrapperStyle={styles.shopRow}
+      />
+    </View>
+  );
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return renderHomeContent();
+      case 'shop':
+        return renderShopContent();
+      case 'courses':
+        return (
+          <View style={styles.placeholderContent}>
+            <Text style={styles.placeholderTitle}>Courses</Text>
+            <Text style={styles.placeholderText}>Coming Soon!</Text>
+          </View>
+        );
+      case 'trading':
+        return (
+          <View style={styles.placeholderContent}>
+            <Text style={styles.placeholderTitle}>Trading</Text>
+            <Text style={styles.placeholderText}>Coming Soon!</Text>
+          </View>
+        );
+      case 'settings':
+        return (
+          <View style={styles.placeholderContent}>
+            <Text style={styles.placeholderTitle}>Settings</Text>
+            <Text style={styles.placeholderText}>Coming Soon!</Text>
+          </View>
+        );
+      default:
+        return renderHomeContent();
+    }
+  };
 
   if (showSplash) {
     return <SplashScreen onAnimationComplete={() => setShowSplash(false)} />;
@@ -73,15 +212,12 @@ export default function HomeScreen() {
             
             <View style={styles.menuItems}>
               <TouchableOpacity style={styles.menuItem}>
-                <Text style={styles.menuItemText}>Home</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem}>
                 <Text style={styles.menuItemText}>About Us</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuItem}>
                 <Text style={styles.menuItemText}>Services</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem}>
+              <TouchableOpacity style={styles.menuItem} onPress={() => { setActiveTab('shop'); setMenuOpen(false); }}>
                 <Text style={styles.menuItemText}>Buy Merch</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuItem}>
@@ -105,79 +241,19 @@ export default function HomeScreen() {
       )}
 
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Hero Section */}
-        <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>Manifesting Positive Vision</Text>
-          <Text style={styles.heroSubtitle}>
-            Embracing Focus and{'\n'}Purpose in Our Brand Culture
-          </Text>
-          <Text style={styles.heroDescription}>
-            Our program empowers entrepreneurs to invest, plan, and budget 
-            effectively while developing corporate dropout plans.
-          </Text>
-          <TouchableOpacity style={styles.joinCommunityButton}>
-            <Text style={styles.joinCommunityButtonText}>Join the Community</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Founder Quote */}
-        <View style={styles.founderQuoteSection}>
-          <Text style={styles.quoteText}>
-            "If opportunity doesn't come knocking, BUILD A DOOR."
-          </Text>
-          <Text style={styles.founderName}>Devonne Stokes</Text>
-          <Text style={styles.founderTitle}>Financial Freedom Expert</Text>
-        </View>
-
-        {/* Video Section */}
-        <View style={styles.videoSection}>
-          <Text style={styles.videoHeading}>Financial</Text>
-          <View style={styles.videoContainer}>
-            <View style={styles.videoPlaceholder}>
-              <Text style={styles.videoPlayButton}>▶️</Text>
-              <Text style={styles.videoText}>Video Content</Text>
-            </View>
-            <View style={styles.breakthroughTextContainer}>
-              <Text style={styles.breakthroughText}>BREAKTHROUGH</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Academy Section */}
-        <View style={styles.academySection}>
-          <Text style={styles.academyText}>Want to know more about us?</Text>
-          <Text style={styles.joinText}>JOIN OUR</Text>
-          <Text style={styles.academyTitle}>ACADEMY</Text>
-          <Text style={styles.comingSoonText}>coming soon</Text>
-        </View>
-
-        {/* Merch Section */}
-        <View style={styles.merchSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Our Merchandise</Text>
-            <TouchableOpacity>
-              <Text style={styles.shopNowText}>Shop Now</Text>
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            data={merchData}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.merchCard}>
-                <Text style={styles.merchImage}>{item.image}</Text>
-                <Text style={styles.merchName}>{item.name}</Text>
-                <Text style={styles.merchPrice}>{item.price}</Text>
-              </View>
-            )}
-            contentContainerStyle={styles.merchList}
-          />
-        </View>
+        {renderTabContent()}
       </ScrollView>
 
       {/* Bottom Tab Bar */}
       <View style={styles.bottomTabBar}>
+        <TouchableOpacity 
+          style={[styles.tabItem, activeTab === 'home' && styles.activeTab]}
+          onPress={() => setActiveTab('home')}
+        >
+          <Text style={styles.tabIcon}>🏠</Text>
+          <Text style={[styles.tabText, activeTab === 'home' && styles.activeTabText]}>Home</Text>
+        </TouchableOpacity>
+        
         <TouchableOpacity 
           style={[styles.tabItem, activeTab === 'courses' && styles.activeTab]}
           onPress={() => setActiveTab('courses')}
@@ -547,5 +623,96 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: AppColors.primary,
     fontWeight: '600',
+  },
+  // Shop Screen Styles
+  shopContainer: {
+    flex: 1,
+    paddingBottom: 100,
+  },
+  shopHeader: {
+    paddingHorizontal: 20,
+    paddingVertical: 32,
+    alignItems: 'center',
+  },
+  shopTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: AppColors.text.primary,
+    marginBottom: 8,
+  },
+  shopSubtitle: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+    textAlign: 'center',
+  },
+  shopGrid: {
+    paddingHorizontal: 16,
+  },
+  shopRow: {
+    justifyContent: 'space-between',
+  },
+  shopItemCard: {
+    backgroundColor: AppColors.background.card,
+    borderRadius: 16,
+    padding: 16,
+    width: (width - 48) / 2,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  shopItemImage: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  shopItemName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.text.primary,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  shopItemDescription: {
+    fontSize: 12,
+    color: AppColors.text.secondary,
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 16,
+  },
+  shopItemPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: AppColors.primary,
+    marginBottom: 12,
+  },
+  addToCartButton: {
+    backgroundColor: AppColors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  addToCartText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: AppColors.background.dark,
+  },
+  // Placeholder Content Styles
+  placeholderContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 100,
+  },
+  placeholderTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: AppColors.text.primary,
+    marginBottom: 16,
+  },
+  placeholderText: {
+    fontSize: 18,
+    color: AppColors.text.secondary,
+    textAlign: 'center',
   },
 });
