@@ -6,6 +6,7 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
+import { AppColors } from '../constants/Colors';
 
 const { width, height } = Dimensions.get('window');
 
@@ -82,7 +83,7 @@ useEffect(() => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.background.dark,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -91,17 +92,15 @@ const styles = StyleSheet.create({
     marginBottom: 60,
   },
   logoText: {
-    fontFamily: 'Montserrat-SemiBold',
     fontSize: 48,
-    fontWeight: '600',
-    color: '#046bd2',
+    fontWeight: '700',
+    color: AppColors.primary,
     letterSpacing: -1,
   },
   logoSubText: {
-    fontFamily: 'Montserrat-SemiBold',
     fontSize: 32,
-    fontWeight: '600',
-    color: '#1e293b',
+    fontWeight: '700',
+    color: AppColors.text.primary,
     letterSpacing: 3,
     marginTop: -10,
   },
@@ -113,13 +112,13 @@ const styles = StyleSheet.create({
   loadingBar: {
     width: width * 0.6,
     height: 3,
-    backgroundColor: '#e2e8f0',
+    backgroundColor: AppColors.background.card,
     borderRadius: 2,
     overflow: 'hidden',
   },
   loadingProgress: {
     height: '100%',
-    backgroundColor: '#046bd2',
+    backgroundColor: AppColors.primary,
     borderRadius: 2,
   },
 });

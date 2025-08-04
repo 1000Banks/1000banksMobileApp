@@ -45,11 +45,25 @@ This is a React Native application built with Expo (v53) called "1000Banks" - a 
 - Google Services files present for both iOS (`GoogleService-Info.plist`) and Android (`google-services.json`)
 - Uses `@react-native-firebase/app` and `@react-native-firebase/auth`
 
-### Styling Approach
-- Custom font families: Montserrat-SemiBold, SourceSansPro-Regular
-- Consistent color scheme with primary blue (#046bd2) and neutral grays
-- Responsive design with Dimensions API
-- Shadow/elevation styling for depth
+### Design System
+Based on the dark-themed fintech design inspiration in `mobile app design.webp`:
+
+**Color Palette:**
+- **Primary Gold:** #F5B800 (buttons, accents, branding)
+- **Dark Background:** #000000 (main background)
+- **Card Background:** #1A1A1A (cards, containers)
+- **Text Primary:** #FFFFFF (main text)
+- **Text Secondary:** #9CA3AF (secondary text, placeholders)
+- **Success Green:** #10B981 (positive values, gains)
+- **Error Red:** #EF4444 (negative values, losses)
+
+**Design Principles:**
+- Dark theme throughout the application
+- Golden yellow (#F5B800) as primary brand color
+- Rounded corners (12-24px border radius)
+- Card-based layouts with subtle backgrounds
+- Clean typography with high contrast
+- Consistent spacing and padding
 
 ### TypeScript Configuration
 - Strict mode enabled
@@ -70,3 +84,14 @@ This is a React Native application built with Expo (v53) called "1000Banks" - a 
 
 ### Testing
 No dedicated test setup configured - uses default Expo/React Native testing capabilities.
+
+## Important Design Guidelines
+
+When working with this codebase, ensure all new screens and components follow the established design system:
+
+1. **Use AppColors constants** from `constants/Colors.ts` instead of hardcoded colors
+2. **Follow the dark theme** - all backgrounds should use `AppColors.background.dark` or `AppColors.background.card`
+3. **Use golden yellow (#F5B800)** for primary actions, buttons, and accents
+4. **Maintain consistent spacing** - use multiples of 8px (8, 16, 24, 32)
+5. **Round corners** - use 12-24px border radius for cards and buttons
+6. **High contrast text** - white (#FFFFFF) on dark backgrounds, gray (#9CA3AF) for secondary text

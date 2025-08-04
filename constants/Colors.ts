@@ -1,26 +1,58 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * 1000Banks App Color Palette
+ * Based on the dark-themed fintech design inspiration
  */
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const primaryGold = '#F5B800';
+const backgroundDark = '#000000';
+const cardDark = '#1A1A1A';
+const textPrimary = '#FFFFFF';
+const textSecondary = '#9CA3AF';
+const successGreen = '#10B981';
+const errorRed = '#EF4444';
 
 export const Colors = {
   light: {
     text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
+    background: '#FFFFFF',
+    tint: primaryGold,
     icon: '#687076',
     tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    tabIconSelected: primaryGold,
+    card: '#F9FAFB',
+    border: '#E5E7EB',
+    primary: primaryGold,
+    success: successGreen,
+    error: errorRed,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: textPrimary,
+    background: backgroundDark,
+    tint: primaryGold,
+    icon: textSecondary,
+    tabIconDefault: textSecondary,
+    tabIconSelected: primaryGold,
+    card: cardDark,
+    border: '#374151',
+    primary: primaryGold,
+    success: successGreen,
+    error: errorRed,
+  },
+};
+
+// Additional theme colors for consistency
+export const AppColors = {
+  primary: primaryGold,
+  background: {
+    dark: backgroundDark,
+    card: cardDark,
+  },
+  text: {
+    primary: textPrimary,
+    secondary: textSecondary,
+  },
+  accent: {
+    success: successGreen,
+    error: errorRed,
   },
 };

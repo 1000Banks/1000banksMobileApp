@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, Button } from 'react-native';
+import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, TouchableOpacity, StatusBar } from 'react-native';
 import {FirebaseError} from 'firebase/app'
 import auth from '@react-native-firebase/auth';
+import { AppColors } from '../constants/Colors';
 
 export default function AuthScreen() {
 
@@ -48,62 +49,148 @@ export default function AuthScreen() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <Text style={styles.titleContainer}>
-        Sign up here
-        </Text>
-        <KeyboardAvoidingView>
-
-        <TextInput
-        style={styles.stepContainer}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
-        />
-        <TextInput
-        style={styles.stepContainer}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        autoCapitalize="none"
-        />
-        <Button
-          title="Sign Up"
-          onPress={handleSignUp} />
-        <Button
-          title="Sign In"
-          onPress={handleSignIn} />
-        </KeyboardAvoidingView>
-
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={AppColors.background.dark} />
+      
+      <View style={styles.header}>
+        <Text style={styles.title}>Welcome to</Text>
+        <View style={styles.logoContainer}>
+          <Text style={styles.logoText}>1000</Text>
+          <Text style={styles.logoSubText}>BANKS</Text>
+        </View>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
       </View>
-   
+
+      <KeyboardAvoidingView style={styles.formContainer} behavior="padding">
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor={AppColors.text.secondary}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+        
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor={AppColors.text.secondary}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+          />
+        </View>
+
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={handleSignIn}
+          disabled={loading}
+        >
+          <Text style={styles.primaryButtonText}>
+            {loading ? 'Signing In...' : 'Sign In'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={handleSignUp}
+          disabled={loading}
+        >
+          <Text style={styles.secondaryButtonText}>
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </Text>
+        </TouchableOpacity>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    color: '#000',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+    backgroundColor: AppColors.background.dark,
+  },
+  header: {
+    paddingTop: 80,
+    paddingHorizontal: 32,
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 48,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    fontSize: 24,
+    color: AppColors.text.secondary,
+    marginBottom: 16,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 16,
+  },
+  logoText: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: AppColors.primary,
+    letterSpacing: -1,
+  },
+  logoSubText: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: AppColors.text.primary,
+    letterSpacing: 2,
+    marginLeft: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+    textAlign: 'center',
+  },
+  formContainer: {
+    flex: 1,
+    paddingHorizontal: 32,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  input: {
+    backgroundColor: AppColors.background.card,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: AppColors.text.primary,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  primaryButton: {
+    backgroundColor: AppColors.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.background.dark,
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: AppColors.primary,
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.primary,
   },
 });
