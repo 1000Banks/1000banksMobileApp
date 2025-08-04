@@ -7,6 +7,8 @@ import {
   ScrollView,
   StatusBar,
   Dimensions,
+  ImageBackground,
+  FlatList,
 } from 'react-native';
 import { router } from 'expo-router';
 import SplashScreen from '../components/SplashScreen';
@@ -16,101 +18,199 @@ const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [showSplash, setShowSplash] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('courses');
 
   const handleGetStarted = () => {
-    // Navigate to auth screen
     router.push('/auth');
   };
+
+  const handleSignIn = () => {
+    router.push('/auth');
+  };
+
+  const handleSignUp = () => {
+    router.push('/auth');
+  };
+
+  // Sample merch data
+  const merchData = [
+    { id: '1', name: '1000Banks Hoodie', price: '$49.99', image: '👕' },
+    { id: '2', name: 'Financial Freedom Mug', price: '$19.99', image: '☕' },
+    { id: '3', name: 'Entrepreneur Cap', price: '$24.99', image: '🧢' },
+    { id: '4', name: 'Success Journal', price: '$29.99', image: '📔' },
+  ];
 
   if (showSplash) {
     return <SplashScreen onAnimationComplete={() => setShowSplash(false)} />;
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={AppColors.background.dark} />
       
-      {/* Header */}
+      {/* Header with Menu */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Text style={styles.logoText}>1000</Text>
           <Text style={styles.logoSubText}>BANKS</Text>
         </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Text style={styles.notificationIcon}>🔔</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Balance Card */}
-      <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Your Balance</Text>
-        <Text style={styles.balanceAmount}>$288,648.43</Text>
-        <View style={styles.balanceChange}>
-          <Text style={styles.changeText}>▲ $18,540.00 (2.5%)</Text>
-        </View>
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.quickActions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={styles.actionIcon}>
-            <Text style={styles.actionIconText}>⬇</Text>
-          </View>
-          <Text style={styles.actionText}>Deposit</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={styles.actionIcon}>
-            <Text style={styles.actionIconText}>⬆</Text>
-          </View>
-          <Text style={styles.actionText}>Withdraw</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={styles.actionIcon}>
-            <Text style={styles.actionIconText}>📊</Text>
-          </View>
-          <Text style={styles.actionText}>Insight</Text>
+        <TouchableOpacity 
+          style={styles.menuButton}
+          onPress={() => setMenuOpen(!menuOpen)}
+        >
+          <Text style={styles.menuIcon}>☰</Text>
         </TouchableOpacity>
       </View>
 
-      {/* CTA Button */}
-      <TouchableOpacity
-        style={styles.ctaButton}
-        onPress={handleGetStarted}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.ctaButtonText}>Get Started</Text>
-      </TouchableOpacity>
-
-      {/* Portfolio Section */}
-      <View style={styles.portfolioSection}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Portfolio</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.portfolioCard}>
-          <View style={styles.stockInfo}>
-            <View style={styles.stockIcon}>
-              <Text style={styles.stockIconText}>🍎</Text>
+      {/* Menu Overlay */}
+      {menuOpen && (
+        <View style={styles.menuOverlay}>
+          <View style={styles.menuContent}>
+            <TouchableOpacity style={styles.menuCloseButton} onPress={() => setMenuOpen(false)}>
+              <Text style={styles.menuCloseIcon}>✕</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.menuItems}>
+              <TouchableOpacity style={styles.menuItem}>
+                <Text style={styles.menuItemText}>Home</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuItem}>
+                <Text style={styles.menuItemText}>About Us</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuItem}>
+                <Text style={styles.menuItemText}>Services</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuItem}>
+                <Text style={styles.menuItemText}>Buy Merch</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuItem}>
+                <Text style={styles.menuItemText}>We're Hiring</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuItem}>
+                <Text style={styles.menuItemText}>Contact Us</Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.stockDetails}>
-              <Text style={styles.stockSymbol}>AAPL</Text>
-              <Text style={styles.stockName}>Apple Inc.</Text>
+
+            <View style={styles.authButtons}>
+              <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
+                <Text style={styles.signInButtonText}>Sign In</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
+                <Text style={styles.signUpButtonText}>Sign Up</Text>
+              </TouchableOpacity>
             </View>
           </View>
-          <View style={styles.stockPrice}>
-            <Text style={styles.priceText}>$327.82</Text>
-            <Text style={styles.changePositive}>▲ 0.65%</Text>
+        </View>
+      )}
+
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Hero Section */}
+        <View style={styles.heroSection}>
+          <Text style={styles.heroTitle}>Manifesting Positive Vision</Text>
+          <Text style={styles.heroSubtitle}>
+            Embracing Focus and{'\n'}Purpose in Our Brand Culture
+          </Text>
+          <Text style={styles.heroDescription}>
+            Our program empowers entrepreneurs to invest, plan, and budget 
+            effectively while developing corporate dropout plans.
+          </Text>
+          <TouchableOpacity style={styles.joinCommunityButton}>
+            <Text style={styles.joinCommunityButtonText}>Join the Community</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Founder Quote */}
+        <View style={styles.founderQuoteSection}>
+          <Text style={styles.quoteText}>
+            "If opportunity doesn't come knocking, BUILD A DOOR."
+          </Text>
+          <Text style={styles.founderName}>Devonne Stokes</Text>
+          <Text style={styles.founderTitle}>Financial Freedom Expert</Text>
+        </View>
+
+        {/* Video Section */}
+        <View style={styles.videoSection}>
+          <Text style={styles.videoHeading}>Financial</Text>
+          <View style={styles.videoContainer}>
+            <View style={styles.videoPlaceholder}>
+              <Text style={styles.videoPlayButton}>▶️</Text>
+              <Text style={styles.videoText}>Video Content</Text>
+            </View>
+            <View style={styles.breakthroughTextContainer}>
+              <Text style={styles.breakthroughText}>BREAKTHROUGH</Text>
+            </View>
           </View>
         </View>
+
+        {/* Academy Section */}
+        <View style={styles.academySection}>
+          <Text style={styles.academyText}>Want to know more about us?</Text>
+          <Text style={styles.joinText}>JOIN OUR</Text>
+          <Text style={styles.academyTitle}>ACADEMY</Text>
+          <Text style={styles.comingSoonText}>coming soon</Text>
+        </View>
+
+        {/* Merch Section */}
+        <View style={styles.merchSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Our Merchandise</Text>
+            <TouchableOpacity>
+              <Text style={styles.shopNowText}>Shop Now</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={merchData}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.merchCard}>
+                <Text style={styles.merchImage}>{item.image}</Text>
+                <Text style={styles.merchName}>{item.name}</Text>
+                <Text style={styles.merchPrice}>{item.price}</Text>
+              </View>
+            )}
+            contentContainerStyle={styles.merchList}
+          />
+        </View>
+      </ScrollView>
+
+      {/* Bottom Tab Bar */}
+      <View style={styles.bottomTabBar}>
+        <TouchableOpacity 
+          style={[styles.tabItem, activeTab === 'courses' && styles.activeTab]}
+          onPress={() => setActiveTab('courses')}
+        >
+          <Text style={styles.tabIcon}>📚</Text>
+          <Text style={[styles.tabText, activeTab === 'courses' && styles.activeTabText]}>Courses</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.tabItem, activeTab === 'shop' && styles.activeTab]}
+          onPress={() => setActiveTab('shop')}
+        >
+          <Text style={styles.tabIcon}>🛍️</Text>
+          <Text style={[styles.tabText, activeTab === 'shop' && styles.activeTabText]}>Shop</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.tabItem, activeTab === 'trading' && styles.activeTab]}
+          onPress={() => setActiveTab('trading')}
+        >
+          <Text style={styles.tabIcon}>📈</Text>
+          <Text style={[styles.tabText, activeTab === 'trading' && styles.activeTabText]}>Trading</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.tabItem, activeTab === 'settings' && styles.activeTab]}
+          onPress={() => setActiveTab('settings')}
+        >
+          <Text style={styles.tabIcon}>⚙️</Text>
+          <Text style={[styles.tabText, activeTab === 'settings' && styles.activeTabText]}>Settings</Text>
+        </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -122,11 +222,12 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: 50,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 15,
     backgroundColor: AppColors.background.dark,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    zIndex: 1000,
   },
   logoContainer: {
     flexDirection: 'row',
@@ -145,154 +246,306 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginLeft: 5,
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  notificationButton: {
+  menuButton: {
     padding: 8,
   },
-  notificationIcon: {
-    fontSize: 20,
-    color: AppColors.text.secondary,
-  },
-  balanceCard: {
-    marginHorizontal: 20,
-    backgroundColor: AppColors.background.card,
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 24,
-  },
-  balanceLabel: {
-    fontSize: 14,
-    color: AppColors.text.secondary,
-    marginBottom: 8,
-  },
-  balanceAmount: {
-    fontSize: 36,
-    fontWeight: '700',
+  menuIcon: {
+    fontSize: 24,
     color: AppColors.text.primary,
-    marginBottom: 8,
   },
-  balanceChange: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  changeText: {
-    fontSize: 14,
-    color: AppColors.accent.success,
-    fontWeight: '600',
-  },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginHorizontal: 20,
-    marginBottom: 32,
-  },
-  actionButton: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  actionIcon: {
-    width: 48,
-    height: 48,
-    backgroundColor: AppColors.background.card,
-    borderRadius: 24,
+  menuOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    zIndex: 999,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  actionIconText: {
-    fontSize: 20,
+  menuContent: {
+    backgroundColor: AppColors.background.card,
+    borderRadius: 20,
+    padding: 32,
+    width: width * 0.85,
+    maxHeight: '80%',
   },
-  actionText: {
-    fontSize: 12,
-    color: AppColors.text.secondary,
-    fontWeight: '500',
+  menuCloseButton: {
+    alignSelf: 'flex-end',
+    padding: 8,
+    marginBottom: 20,
   },
-  ctaButton: {
-    marginHorizontal: 20,
-    backgroundColor: AppColors.primary,
-    paddingVertical: 16,
-    paddingHorizontal: 30,
-    borderRadius: 24,
-    alignItems: 'center',
+  menuCloseIcon: {
+    fontSize: 24,
+    color: AppColors.text.primary,
+  },
+  menuItems: {
     marginBottom: 32,
   },
-  ctaButtonText: {
+  menuItem: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: AppColors.background.dark,
+  },
+  menuItemText: {
+    fontSize: 18,
+    color: AppColors.text.primary,
+    fontWeight: '500',
+  },
+  authButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  signInButton: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: AppColors.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  signInButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.primary,
+  },
+  signUpButton: {
+    flex: 1,
+    backgroundColor: AppColors.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  signUpButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: AppColors.background.dark,
   },
-  portfolioSection: {
+  scrollContent: {
+    flex: 1,
+  },
+  heroSection: {
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: AppColors.text.primary,
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 38,
+  },
+  heroSubtitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: AppColors.primary,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 30,
+  },
+  heroDescription: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+    paddingHorizontal: 16,
+  },
+  joinCommunityButton: {
+    backgroundColor: AppColors.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 24,
+  },
+  joinCommunityButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.background.dark,
+  },
+  founderQuoteSection: {
+    backgroundColor: AppColors.background.card,
     marginHorizontal: 20,
+    borderRadius: 20,
+    padding: 32,
     marginBottom: 40,
+    alignItems: 'center',
+  },
+  quoteText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: AppColors.text.primary,
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 28,
+    fontStyle: 'italic',
+  },
+  founderName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: AppColors.primary,
+    marginBottom: 4,
+  },
+  founderTitle: {
+    fontSize: 14,
+    color: AppColors.text.secondary,
+    fontWeight: '500',
+  },
+  videoSection: {
+    paddingHorizontal: 20,
+    marginBottom: 40,
+  },
+  videoHeading: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: AppColors.text.primary,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  videoContainer: {
+    position: 'relative',
+    height: 200,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  videoPlaceholder: {
+    flex: 1,
+    backgroundColor: AppColors.background.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  videoPlayButton: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+  videoText: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+  },
+  breakthroughTextContainer: {
+    position: 'absolute',
+    top: 20,
+    right: -10,
+    transform: [{ rotate: '15deg' }],
+  },
+  breakthroughText: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: AppColors.primary,
+    textShadowColor: AppColors.background.dark,
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
+    letterSpacing: 2,
+  },
+  academySection: {
+    backgroundColor: AppColors.background.card,
+    marginHorizontal: 20,
+    borderRadius: 20,
+    padding: 32,
+    marginBottom: 40,
+    alignItems: 'center',
+  },
+  academyText: {
+    fontSize: 18,
+    color: AppColors.text.secondary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  joinText: {
+    fontSize: 16,
+    color: AppColors.text.primary,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  academyTitle: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: AppColors.primary,
+    marginBottom: 8,
+  },
+  comingSoonText: {
+    fontSize: 14,
+    color: AppColors.text.secondary,
+    fontStyle: 'italic',
+  },
+  merchSection: {
+    marginBottom: 100,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    paddingHorizontal: 20,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
     color: AppColors.text.primary,
   },
-  seeAllText: {
-    fontSize: 14,
+  shopNowText: {
+    fontSize: 16,
     color: AppColors.primary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  portfolioCard: {
+  merchList: {
+    paddingLeft: 20,
+  },
+  merchCard: {
     backgroundColor: AppColors.background.card,
     borderRadius: 16,
     padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginRight: 16,
+    width: 140,
     alignItems: 'center',
   },
-  stockInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  merchImage: {
+    fontSize: 40,
+    marginBottom: 12,
   },
-  stockIcon: {
-    width: 40,
-    height: 40,
-    backgroundColor: AppColors.background.dark,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  stockIconText: {
-    fontSize: 20,
-  },
-  stockDetails: {
-    flex: 1,
-  },
-  stockSymbol: {
-    fontSize: 16,
+  merchName: {
+    fontSize: 14,
     fontWeight: '600',
     color: AppColors.text.primary,
+    textAlign: 'center',
+    marginBottom: 8,
   },
-  stockName: {
+  merchPrice: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: AppColors.primary,
+  },
+  bottomTabBar: {
+    flexDirection: 'row',
+    backgroundColor: AppColors.background.card,
+    paddingBottom: 20,
+    paddingTop: 12,
+    paddingHorizontal: 16,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  activeTab: {
+    backgroundColor: AppColors.primary + '20',
+  },
+  tabIcon: {
+    fontSize: 20,
+    marginBottom: 4,
+  },
+  tabText: {
     fontSize: 12,
     color: AppColors.text.secondary,
-    marginTop: 2,
-  },
-  stockPrice: {
-    alignItems: 'flex-end',
-  },
-  priceText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: AppColors.text.primary,
-  },
-  changePositive: {
-    fontSize: 12,
-    color: AppColors.accent.success,
     fontWeight: '500',
-    marginTop: 2,
+  },
+  activeTabText: {
+    color: AppColors.primary,
+    fontWeight: '600',
   },
 });
