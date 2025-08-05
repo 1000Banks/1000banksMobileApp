@@ -211,10 +211,10 @@ export default function HomeScreen() {
             </TouchableOpacity>
             
             <View style={styles.menuItems}>
-              <TouchableOpacity style={styles.menuItem}>
+              <TouchableOpacity style={styles.menuItem} onPress={() => { router.push('/about'); setMenuOpen(false); }}>
                 <Text style={styles.menuItemText}>About Us</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem}>
+              <TouchableOpacity style={styles.menuItem} onPress={() => { router.push('/services'); setMenuOpen(false); }}>
                 <Text style={styles.menuItemText}>Services</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuItem} onPress={() => { setActiveTab('shop'); setMenuOpen(false); }}>
@@ -240,9 +240,13 @@ export default function HomeScreen() {
         </View>
       )}
 
-      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {renderTabContent()}
-      </ScrollView>
+      {activeTab === 'shop' ? (
+        renderShopContent()
+      ) : (
+        <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {renderTabContent()}
+        </ScrollView>
+      )}
 
       {/* Bottom Tab Bar */}
       <View style={styles.bottomTabBar}>
@@ -627,7 +631,6 @@ const styles = StyleSheet.create({
   // Shop Screen Styles
   shopContainer: {
     flex: 1,
-    paddingBottom: 100,
   },
   shopHeader: {
     paddingHorizontal: 20,
