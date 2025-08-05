@@ -13,6 +13,9 @@ import {
 import { router } from 'expo-router';
 import SplashScreen from '../components/SplashScreen';
 import { AppColors } from '../constants/Colors';
+import { useCart } from '../contexts/CartContext';
+import { Ionicons } from '@expo/vector-icons';
+import CoursesScreen from './courses';
 
 const { width } = Dimensions.get('window');
 
@@ -20,6 +23,7 @@ export default function HomeScreen() {
   const [showSplash, setShowSplash] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
+  const { cartItems, addToCart, getCartCount } = useCart();
 
   const handleGetStarted = () => {
     router.push('/auth');
@@ -137,7 +141,17 @@ export default function HomeScreen() {
             <Text style={styles.shopItemName}>{item.name}</Text>
             <Text style={styles.shopItemDescription}>{item.description}</Text>
             <Text style={styles.shopItemPrice}>{item.price}</Text>
-            <TouchableOpacity style={styles.addToCartButton}>
+            <TouchableOpacity 
+              style={styles.addToCartButton}
+              onPress={() => addToCart({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                type: 'product',
+                image: item.image,
+                description: item.description
+              })}
+            >
               <Text style={styles.addToCartText}>Add to Cart</Text>
             </TouchableOpacity>
           </View>
@@ -155,12 +169,7 @@ export default function HomeScreen() {
       case 'shop':
         return renderShopContent();
       case 'courses':
-        return (
-          <View style={styles.placeholderContent}>
-            <Text style={styles.placeholderTitle}>Courses</Text>
-            <Text style={styles.placeholderText}>Coming Soon!</Text>
-          </View>
-        );
+        return <CoursesScreen />;
       case 'trading':
         return (
           <View style={styles.placeholderContent}>
@@ -194,12 +203,25 @@ export default function HomeScreen() {
           <Text style={styles.logoText}>1000</Text>
           <Text style={styles.logoSubText}>BANKS</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.menuButton}
-          onPress={() => setMenuOpen(!menuOpen)}
-        >
-          <Text style={styles.menuIcon}>☰</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.cartButton}
+            onPress={() => router.push('/checkout')}
+          >
+            <Ionicons name="cart-outline" size={24} color={AppColors.text.primary} />
+            {getCartCount() > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{getCartCount()}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={() => setMenuOpen(!menuOpen)}
+          >
+            <Text style={styles.menuIcon}>☰</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Menu Overlay */}
@@ -240,8 +262,8 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {activeTab === 'shop' ? (
-        renderShopContent()
+      {activeTab === 'shop' || activeTab === 'courses' ? (
+        renderTabContent()
       ) : (
         <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {renderTabContent()}
@@ -325,6 +347,32 @@ const styles = StyleSheet.create({
     color: AppColors.text.primary,
     letterSpacing: 1.5,
     marginLeft: 5,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cartButton: {
+    padding: 8,
+    marginRight: 8,
+    position: 'relative',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: AppColors.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  cartBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: AppColors.background.dark,
   },
   menuButton: {
     padding: 8,
