@@ -10,6 +10,8 @@ export default function RootLayout() {
         <Stack.Screen name="about" />
         <Stack.Screen name="services" />
         <Stack.Screen name="contact" />
+        <Stack.Screen name="faq" />
+        <Stack.Screen name="hiring" />
         <Stack.Screen name="course-detail" />
         <Stack.Screen name="checkout" />
       </Stack>

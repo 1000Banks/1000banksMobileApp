@@ -239,13 +239,13 @@ export default function HomeScreen() {
               <TouchableOpacity style={styles.menuItem} onPress={() => { router.push('/services'); setMenuOpen(false); }}>
                 <Text style={styles.menuItemText}>Services</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={() => { setActiveTab('shop'); setMenuOpen(false); }}>
-                <Text style={styles.menuItemText}>Buy Merch</Text>
+              <TouchableOpacity style={styles.menuItem} onPress={() => { router.push('/faq'); setMenuOpen(false); }}>
+                <Text style={styles.menuItemText}>FAQ</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem}>
+              <TouchableOpacity style={styles.menuItem} onPress={() => { router.push('/hiring'); setMenuOpen(false); }}>
                 <Text style={styles.menuItemText}>We're Hiring</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem}>
+              <TouchableOpacity style={styles.menuItem} onPress={() => { router.push('/contact'); setMenuOpen(false); }}>
                 <Text style={styles.menuItemText}>Contact Us</Text>
               </TouchableOpacity>
             </View>
