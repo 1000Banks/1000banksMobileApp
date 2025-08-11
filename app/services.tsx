@@ -10,9 +10,12 @@ import {
   Animated,
   Pressable,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
+import AppHeader from '@/components/AppHeader';
+import BottomTabs from '@/components/BottomTabs';
 
 const { width } = Dimensions.get('window');
 
@@ -145,7 +148,9 @@ const ServicesScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <AppHeader title="Services" />
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
       <View style={styles.headerSection}>
         <Text style={styles.mainTitle}>Empower Your Financial Future</Text>
         <Text style={styles.quote}>
@@ -243,7 +248,9 @@ const ServicesScreen = () => {
           Planning helps bring clarity and understanding to vision. Take action now.
         </Text>
       </View>
-    </ScrollView>
+      </ScrollView>
+      <BottomTabs />
+    </SafeAreaView>
   );
 };
 
@@ -252,9 +259,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: AppColors.background.dark,
   },
+  scrollContent: {
+    flex: 1,
+  },
   headerSection: {
     padding: 32,
-    paddingTop: 80,
+    paddingTop: 20,
     alignItems: 'center',
     backgroundColor: AppColors.background.card,
   },

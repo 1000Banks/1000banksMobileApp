@@ -6,13 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  SafeAreaView,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/contexts/CartContext';
+import AppHeader from '@/components/AppHeader';
+import BottomTabs from '@/components/BottomTabs';
 
 const CheckoutScreen = () => {
   const router = useRouter();

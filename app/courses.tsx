@@ -8,10 +8,12 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/contexts/CartContext';
+import BottomTabs from '@/components/BottomTabs';
 
 const { width } = Dimensions.get('window');
 
@@ -239,7 +241,8 @@ const CoursesScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Our Courses</Text>
         <Text style={styles.headerSubtitle}>
@@ -307,14 +310,19 @@ const CoursesScreen = () => {
           <Text style={styles.consultationButtonText}>Book Consultation</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+      </ScrollView>
+      <BottomTabs />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: AppColors.background.dark,
+  },
+  container: {
+    flex: 1,
   },
   header: {
     paddingTop: 60,

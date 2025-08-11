@@ -315,11 +315,11 @@ export default function HomeScreen() {
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={[styles.tabItem, activeTab === 'settings' && styles.activeTab]}
-          onPress={() => setActiveTab('settings')}
+          style={[styles.tabItem, activeTab === 'account' && styles.activeTab]}
+          onPress={() => router.push('/account')}
         >
-          <Text style={styles.tabIcon}>⚙️</Text>
-          <Text style={[styles.tabText, activeTab === 'settings' && styles.activeTabText]}>Settings</Text>
+          <Text style={styles.tabIcon}>👤</Text>
+          <Text style={[styles.tabText, activeTab === 'account' && styles.activeTabText]}>Account</Text>
         </TouchableOpacity>
       </View>
     </View>

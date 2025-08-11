@@ -51,6 +51,8 @@ export const AppColors = {
     primary: textPrimary,
     secondary: textSecondary,
   },
+  success: successGreen,
+  error: errorRed,
   accent: {
     success: successGreen,
     error: errorRed,

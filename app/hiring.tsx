@@ -5,12 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
+import AppHeader from '@/components/AppHeader';
+import BottomTabs from '@/components/BottomTabs';
 
 interface JobListing {
   id: string;
@@ -280,19 +282,9 @@ const HiringScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color={AppColors.text.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>We're Hiring</Text>
-          <View style={{ width: 40 }} />
-        </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <AppHeader title="We're Hiring" />
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Hero Section */}
         <View style={styles.heroSection}>
@@ -387,6 +379,7 @@ const HiringScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <BottomTabs />
     </SafeAreaView>
   );
 };

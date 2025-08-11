@@ -2,6 +2,9 @@ import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import AppHeader from '@/components/AppHeader';
+import BottomTabs from '@/components/BottomTabs';
 import {
   Dimensions,
   Image,
@@ -18,17 +21,9 @@ const AboutScreen = () => {
   const router = useRouter();
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color={AppColors.text.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>About Us</Text>
-      </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <AppHeader title="About Us" />
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
       {/* Hero Section */}
       <View style={styles.heroSection}>
@@ -238,7 +233,9 @@ const AboutScreen = () => {
           <Text style={styles.ctaButtonText}>Get Started Today</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+      </ScrollView>
+      <BottomTabs />
+    </SafeAreaView>
   );
 };
 
@@ -247,25 +244,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: AppColors.background.dark,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: AppColors.text.primary,
+  scrollContent: {
+    flex: 1,
   },
   heroSection: {
     alignItems: 'center',
     paddingVertical: 40,
+    paddingTop: 20,
   },
   logo: {
     width: 120,

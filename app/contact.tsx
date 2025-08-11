@@ -240,6 +240,7 @@ const ContactScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <BottomTabs />
     </SafeAreaView>
   );
 };
@@ -249,21 +250,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: AppColors.background.dark,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: AppColors.text.primary,
+  scrollContent: {
+    flex: 1,
   },
   heroSection: {
     padding: 24,
