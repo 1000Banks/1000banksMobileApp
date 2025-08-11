@@ -174,7 +174,10 @@ const ServicesScreen = () => {
       <View style={styles.academySection}>
         <Text style={styles.sectionTitle}>Join Our Academy</Text>
         <Text style={styles.sectionText}>
-          Our program empowers entrepreneurs to invest, plan, and budget effectively while developing corporate dropout plans
+          Our brand is founded on the belief that divine providence supports vision and not distraction. Our mission is to spread positivity and empower our customers to wear their affirmations with pride.
+        </Text>
+        <Text style={styles.sectionText}>
+          We aim to inspire and encourage individuals to be their own biggest cheerleaders with our merchandise, which is designed to promote good vibes and confidence. We are committed to creating a range of affirmation tees that reflect our values and help our customers elevate their mindset and wardrobe.
         </Text>
         <Image
           source={require('@/assets/images/services-image-1.webp')}

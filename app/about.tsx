@@ -1,16 +1,16 @@
-import React from 'react';
-import {
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import {
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -40,13 +40,31 @@ const AboutScreen = () => {
         <Text style={styles.tagline}>Empowering Financial Freedom</Text>
       </View>
 
+      {/* About Content with Image */}
+      <View style={styles.section}>
+        <Text style={styles.sectionText}>
+          Are you an entrepreneur who feels discouraged by financial obstacles? 1000Banks offers a program to help you grow your financial literacy, develop a plan to drop out of the corporate world, and master your everyday life through effective planning and budgeting. We believe in second chances and offer "Another Chance" to those who have faced setbacks but are ready to take control of their finances and future. Join us and invest in your success today.
+        </Text>
+        <Image
+          source={require('@/assets/images/about-us-1.webp')}
+          style={styles.contentImage}
+          resizeMode="cover"
+        />
+      </View>
+
+      {/* Philosophy Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Our Philosophy</Text>
+        <Text style={styles.sectionText}>
+          At our brand, we firmly believe that when you have a positive vision, God will provide the resources to bring it to fruition. Our founder's philosophy is to focus on your goals and avoid distractions, and that's what we embody in our brand's culture. We strive to spread positivity through our clothing and encourage our customers to wear their affirmations with pride.
+        </Text>
+      </View>
+
       {/* Mission Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Our Mission</Text>
         <Text style={styles.sectionText}>
-          At 1000Banks, we believe in democratizing financial knowledge and opportunities. 
-          Our mission is to empower individuals and entrepreneurs with the tools, education, 
-          and community support needed to achieve financial independence and build lasting wealth.
+          Our brand is founded on the belief that divine providence supports vision and not distraction. Our mission is to spread positivity and empower our customers to wear their affirmations with pride. We aim to inspire and encourage individuals to be their own biggest cheerleaders with our merchandise, which is designed to promote good vibes and confidence. We are committed to creating a range of affirmation tees that reflect our values and help our customers elevate their mindset and wardrobe.
         </Text>
       </View>
 
@@ -117,21 +135,94 @@ const AboutScreen = () => {
 
       {/* Team Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Leadership</Text>
-        <View style={styles.founderCard}>
-          <View style={styles.founderAvatar}>
-            <Ionicons name="person" size={40} color={AppColors.primary} />
+        <Text style={styles.sectionTitle}>Our Expert Team</Text>
+        <Text style={styles.teamIntro}>
+          Meet the passionate minds behind 1000Banks — a team committed to transforming opportunities into success.
+        </Text>
+        <Text style={styles.teamSubtitle}>
+          Behind every successful outcome is a dedicated team. At 1000Banks, our professionals bring together experience, innovation, and a passion for helping individuals and businesses achieve their financial goals. We don't just offer services — we provide strategic partnerships built on trust and results.
+        </Text>
+        
+        {/* Team Grid */}
+        <View style={styles.teamGrid}>
+          {/* CEO */}
+          <View style={styles.teamMember}>
+            <View style={styles.memberAvatar}>
+              <Image
+                source={require('@/assets/images/devonne-stoke.png')}
+                style={styles.memberAvatarImage}
+                resizeMode="cover" />
+            </View>
+            <Text style={styles.memberName}>Devonne Stokes</Text>
+            <Text style={styles.memberTitle}>CEO | FOUNDER</Text>
+            <Text style={styles.memberWebsite}>www.devonnestokes.com</Text>
           </View>
-          <Text style={styles.founderName}>Devonne Stokes</Text>
-          <Text style={styles.founderTitle}>Founder & CEO</Text>
-          <Text style={styles.founderQuote}>
-            "If opportunity doesn't come knocking, BUILD A DOOR."
-          </Text>
-          <Text style={styles.founderBio}>
-            A visionary entrepreneur and financial freedom expert dedicated to helping 
-            others break free from financial limitations and create their own opportunities.
-          </Text>
+
+          {/* CFO */}
+          <View style={styles.teamMember}>
+            <View style={styles.memberAvatar}>
+              <Image
+                source={require('@/assets/images/ER-RHONDA.png')}
+                style={styles.memberAvatarImage}
+                resizeMode="cover" />
+            </View>
+            <Text style={styles.memberName}>Rhonda Mcwilliams</Text>
+            <Text style={styles.memberTitle}>CFO</Text>
+          </View>
+
+          {/* COO */}
+          <View style={styles.teamMember}>
+            <View style={styles.memberAvatar}>
+              <Image
+                source={require('@/assets/images/Monique.png')}
+                style={styles.memberAvatarImage}
+                resizeMode="cover" />
+            </View>
+            <Text style={styles.memberName}>Monique Bailey</Text>
+            <Text style={styles.memberTitle}>COO | PRESIDENT</Text>
+            <Text style={styles.memberWebsite}>www.moniquebailey.com</Text>
+          </View>
+
+          {/* CCO */}
+          <View style={styles.teamMember}>
+            <View style={styles.memberAvatar}>
+              <Image
+                source={require('@/assets/images/SAM.png')}
+                style={styles.memberAvatarImage}
+                resizeMode="cover" />
+            </View>
+            <Text style={styles.memberName}>Samuel Bailey</Text>
+            <Text style={styles.memberTitle}>CCO | SENIOR VICE PRESIDENT</Text>
+          </View>
+
+          {/* CINO */}
+          <View style={styles.teamMember}>
+            <View style={styles.memberAvatar}>
+              <Image
+                source={require('@/assets/images/WAYNE.png')}
+                style={styles.memberAvatarImage}
+                resizeMode="cover" />
+            </View>
+            <Text style={styles.memberName}>Wayne Waldrow</Text>
+            <Text style={styles.memberTitle}>CINO | EXECUTIVE VP OF OPERATIONS</Text>
+          </View>
+
+          {/* CHRO */}
+          <View style={styles.teamMember}>
+            <View style={styles.memberAvatar}>
+              <Image
+                source={require('@/assets/images/Monique.png')}
+                style={styles.memberAvatarImage}
+                resizeMode="cover" />
+            </View>
+            <Text style={styles.memberName}>Mary Escoto</Text>
+            <Text style={styles.memberTitle}>CHIEF HUMAN RESOURCE OFFICER</Text>
+          </View>
         </View>
+        
+        <Text style={styles.teamCallout}>
+          Inspired by our mission? There's a place here for you.
+        </Text>
       </View>
 
       {/* CTA Section */}
@@ -242,11 +333,16 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    overflow: 'hidden',
     backgroundColor: AppColors.primary + '20',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
+  founderAvatarImage: {
+  width: '110%',  // slightly larger than container
+  height: '110%',
+},
   founderName: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -301,6 +397,79 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: AppColors.background.dark,
+  },
+  contentImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 16,
+    marginTop: 24,
+  },
+  teamIntro: {
+    fontSize: 18,
+    color: AppColors.text.primary,
+    textAlign: 'center',
+    marginBottom: 16,
+    fontWeight: '600',
+  },
+  teamSubtitle: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+    paddingHorizontal: 16,
+  },
+  teamGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 24,
+  },
+  teamMember: {
+    width: (width - 72) / 2,
+    backgroundColor: AppColors.background.card,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  memberAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    overflow: 'hidden',
+    backgroundColor: AppColors.primary + '20',
+    marginBottom: 12,
+  },
+  memberAvatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  memberName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: AppColors.text.primary,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  memberTitle: {
+    fontSize: 12,
+    color: AppColors.primary,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  memberWebsite: {
+    fontSize: 11,
+    color: AppColors.text.secondary,
+    textAlign: 'center',
+  },
+  teamCallout: {
+    fontSize: 18,
+    color: AppColors.primary,
+    textAlign: 'center',
+    marginTop: 32,
+    fontWeight: '600',
+    fontStyle: 'italic',
   },
 });
 

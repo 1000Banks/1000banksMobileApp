@@ -208,8 +208,6 @@ export default function HomeScreen() {
       {/* Header with Menu */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-          {/* <Text style={styles.logoText}>1000</Text> */}
-          {/* <Text style={styles.logoSubText}>BANKS</Text> */}
           <Image 
             source={require('../assets/images/logo.webp')} 
             style={{ width: 100, height: 40 }} 
