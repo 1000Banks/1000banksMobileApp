@@ -9,7 +9,10 @@
       "Bash(npx expo run:android:*)",
       "Bash(./android/gradlew:*)",
       "Bash(npx expo prebuild:*)",
-      "Bash(npx expo start:*)"
+      "Bash(npx expo start:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

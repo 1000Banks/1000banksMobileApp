@@ -6,13 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  SafeAreaView,
   Alert,
   Linking,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
+import AppHeader from '@/components/AppHeader';
+import BottomTabs from '@/components/BottomTabs';
 
 const ContactScreen = () => {
   const router = useRouter();
@@ -52,19 +54,9 @@ const ContactScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color={AppColors.text.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Contact Us</Text>
-          <View style={{ width: 40 }} />
-        </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <AppHeader title="Contact Us" />
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Hero Section */}
         <View style={styles.heroSection}>
