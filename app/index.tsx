@@ -177,7 +177,7 @@ export default function HomeScreen() {
       case 'shop':
         return renderShopContent();
       case 'courses':
-        return <CoursesScreen />;
+        return <CoursesScreen embedded={true} />;
       case 'trading':
         return (
           <View style={styles.placeholderContent}>

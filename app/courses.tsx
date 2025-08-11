@@ -14,6 +14,7 @@ import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/contexts/CartContext';
 import BottomTabs from '@/components/BottomTabs';
+import AppHeader from '@/components/AppHeader';
 
 const { width } = Dimensions.get('window');
 
@@ -209,7 +210,11 @@ export const coursesData: Course[] = [
   }
 ];
 
-const CoursesScreen = () => {
+interface CoursesScreenProps {
+  embedded?: boolean;
+}
+
+const CoursesScreen: React.FC<CoursesScreenProps> = ({ embedded = false }) => {
   const router = useRouter();
   const { addToCart } = useCart();
 
@@ -240,9 +245,8 @@ const CoursesScreen = () => {
     });
   };
 
-  return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+  const CourseContent = () => (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Our Courses</Text>
         <Text style={styles.headerSubtitle}>
@@ -310,7 +314,17 @@ const CoursesScreen = () => {
           <Text style={styles.consultationButtonText}>Book Consultation</Text>
         </TouchableOpacity>
       </View>
-      </ScrollView>
+    </ScrollView>
+  );
+
+  if (embedded) {
+    return <CourseContent />;
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <AppHeader title="Courses" showBackButton={false} />
+      <CourseContent />
       <BottomTabs />
     </SafeAreaView>
   );

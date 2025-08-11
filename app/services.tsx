@@ -57,7 +57,7 @@ const services: ServiceItem[] = [
     title: '#1000Banks Community',
     subtitle: 'Master Financial Markets',
     description:
-      '#1000Banks Offers a dynamic gateway into the world of financial markets. Gain expertise through our Trading Academy, where you\'ll explore comprehensive courses covering stocks, foreign exchange (FRX), futures, and investing. Whether you\'re a beginner or looking to sharpen your skills, our curriculum is designed to empower you with the knowledge and strategies needed for successful trading across diverse assets.',
+      '#1000Banks offers a dynamic gateway into the world of financial markets. Gain expertise through our Trading Academy, where you\'ll explore comprehensive courses covering stocks, foreign exchange (FRX), futures, and investing. Whether you\'re a beginner or looking to sharpen your skills, our curriculum is designed to empower you with the knowledge and strategies needed for successful trading across diverse assets. In addition to self-paced learning, you\'ll get real-time support through live trading calls, where our experts break down market moves and share insights as they happen. Plus, take advantage of our copy-and-paste trade system, simply follow our signals and apply them to your own account with ease. Master the art of navigating financial markets with confidence and take control of your financial future with #1000Banks.',
     icon: 'people',
   },
   {
@@ -106,11 +106,7 @@ const ServicesScreen = () => {
   };
 
   const ServiceCard = ({ service }: { service: ServiceItem }) => {
-    const animatedHeight = animatedValues[service.id].interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 200],
-    });
-
+    const isExpanded = expandedService === service.id;
     const rotateIcon = animatedValues[service.id].interpolate({
       inputRange: [0, 1],
       outputRange: ['0deg', '180deg'],
@@ -140,9 +136,11 @@ const ServicesScreen = () => {
             />
           </Animated.View>
         </View>
-        <Animated.View style={[styles.serviceContent, { height: animatedHeight }]}>
-          <Text style={styles.serviceDescription}>{service.description}</Text>
-        </Animated.View>
+        {isExpanded && (
+          <View style={styles.serviceContent}>
+            <Text style={styles.serviceDescription}>{service.description}</Text>
+          </View>
+        )}
       </Pressable>
     );
   };
@@ -412,7 +410,9 @@ const styles = StyleSheet.create({
     color: AppColors.text.secondary,
   },
   serviceContent: {
-    overflow: 'hidden',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
   serviceDescription: {
     fontSize: 14,

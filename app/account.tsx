@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import BottomTabs from '@/components/BottomTabs';
+import AppHeader from '@/components/AppHeader';
 
 interface Course {
   id: string;
@@ -196,11 +197,9 @@ const AccountScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Account</Text>
-      </View>
+      <AppHeader title="Account" showBackButton={false} />
 
-      {/* Tab Navigation */}
+      {/* Internal Tab Navigation */}
       <View style={styles.tabNavigation}>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'learnings' && styles.activeTabButton]}
@@ -244,20 +243,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: AppColors.background.dark,
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    backgroundColor: AppColors.background.dark,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: AppColors.text.primary,
-  },
   tabNavigation: {
     flexDirection: 'row',
     paddingHorizontal: 24,
     marginBottom: 20,
+    marginTop: 10,
   },
   tabButton: {
     flex: 1,
