@@ -1,22 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+// import MaskedView from '@react-native-masked-view/masked-view';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  Dimensions,
+  FlatList,
+  Image,
   ScrollView,
   StatusBar,
-  Dimensions,
-  ImageBackground,
-  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { router } from 'expo-router';
+// import Svg, { Text as SvgText, Path, G } from 'react-native-svg';
 import SplashScreen from '../components/SplashScreen';
 import { AppColors } from '../constants/Colors';
 import { useCart } from '../contexts/CartContext';
-import { Ionicons } from '@expo/vector-icons';
 import CoursesScreen from './courses';
-
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
@@ -78,13 +79,20 @@ export default function HomeScreen() {
       {/* Video Section */}
       <View style={styles.videoSection}>
         <Text style={styles.videoHeading}>Financial</Text>
+        <View style={styles.brokenTextContainer}>
+          <Text style={styles.brokenTextMain}>BREAKTHROUGH</Text>
+          <View style={styles.brokenEffect}>
+            {/* Subtle crack lines for broken glass effect */}
+            <View style={[styles.crackLine, { left: '15%', transform: [{ rotate: '15deg' }] }]} />
+            <View style={[styles.crackLine, { left: '35%', transform: [{ rotate: '-20deg' }] }]} />
+            <View style={[styles.crackLine, { left: '55%', transform: [{ rotate: '25deg' }] }]} />
+            <View style={[styles.crackLine, { left: '75%', transform: [{ rotate: '-15deg' }] }]} />
+          </View>
+        </View>
         <View style={styles.videoContainer}>
           <View style={styles.videoPlaceholder}>
             <Text style={styles.videoPlayButton}>▶️</Text>
             <Text style={styles.videoText}>Video Content</Text>
-          </View>
-          <View style={styles.breakthroughTextContainer}>
-            <Text style={styles.breakthroughText}>BREAKTHROUGH</Text>
           </View>
         </View>
       </View>
@@ -200,8 +208,12 @@ export default function HomeScreen() {
       {/* Header with Menu */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>1000</Text>
-          <Text style={styles.logoSubText}>BANKS</Text>
+          {/* <Text style={styles.logoText}>1000</Text> */}
+          {/* <Text style={styles.logoSubText}>BANKS</Text> */}
+          <Image 
+            source={require('../assets/images/logo.webp')} 
+            style={{ width: 100, height: 40 }} 
+            resizeMode="contain"/>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity 
@@ -531,8 +543,8 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: AppColors.text.primary,
-    marginBottom: 20,
     textAlign: 'center',
+    marginBottom: 10,
   },
   videoContainer: {
     position: 'relative',
@@ -765,5 +777,40 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: AppColors.text.secondary,
     textAlign: 'center',
+  },
+  brokenTextContainer: {
+    height: 80,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginBottom: 20,
+  },
+  brokenTextMain: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: AppColors.text.primary,
+    letterSpacing: 8,
+    textAlign: 'center',
+    textShadowColor: AppColors.primary,
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
+    zIndex: 1,
+  },
+  brokenEffect: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crackLine: {
+    position: 'absolute',
+    width: 1,
+    height: 40,
+    backgroundColor: AppColors.primary,
+    opacity: 0.3,
   },
 });

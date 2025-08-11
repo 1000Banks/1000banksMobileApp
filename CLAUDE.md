@@ -33,8 +33,9 @@ This is a React Native application built with Expo (v53) called "1000Banks" - a 
 - **Authentication flow**: Firebase Auth integration with email/password signup/signin
 
 ### Key Directories
-- `app/` - Screen components and routing (index.tsx = home, auth.tsx = authentication)
+- `app/` - Screen components and routing using Expo Router file-based routing
 - `components/` - Reusable UI components including SplashScreen, ThemedText, ThemedView
+- `contexts/` - React Context providers for global state management
 - `constants/` - App constants like Colors
 - `hooks/` - Custom React hooks (useColorScheme, useThemeColor)
 - `assets/` - Images, fonts, and static assets
@@ -95,3 +96,64 @@ When working with this codebase, ensure all new screens and components follow th
 4. **Maintain consistent spacing** - use multiples of 8px (8, 16, 24, 32)
 5. **Round corners** - use 12-24px border radius for cards and buttons
 6. **High contrast text** - white (#FFFFFF) on dark backgrounds, gray (#9CA3AF) for secondary text
+
+## Application Architecture
+
+### E-commerce & Educational Platform
+The app combines fintech education with e-commerce functionality:
+
+**Core Features:**
+- **Course Catalog**: Browse and purchase financial education courses with detailed curriculum
+- **Product Shop**: Merchandise and financial products with cart functionality
+- **Investment Programs**: Information about 1000Streams and other investment opportunities
+- **Educational Content**: Trading signals, coaching programs, and financial planning services
+
+### State Management
+- **CartContext**: Global shopping cart state using React Context API
+  - Manages both course enrollments and product purchases
+  - Handles cart operations (add, remove, update quantity, checkout)
+  - Supports both 'product' and 'course' item types
+  - Provides cart total calculation and item count
+  
+### Navigation Architecture
+- **File-based routing** with Expo Router
+- **Bottom tab navigation** within main screen (Home, Courses, Shop, Trading, Settings)
+- **Modal/Stack navigation** for detail screens (Course Detail, Checkout, About, etc.)
+- **Menu overlay** for additional navigation options
+
+### Screen Organization
+**Main Screens:**
+- `index.tsx` - Multi-tab home screen with embedded navigation
+- `courses.tsx` - Course catalog with filtering and search
+- `course-detail.tsx` - Individual course information and enrollment
+- `checkout.tsx` - Unified checkout for both courses and products
+
+**Information Pages:**
+- `about.tsx` - Company information, mission, values, team
+- `services.tsx` - Detailed service offerings and programs
+- `contact.tsx` - Contact form, business information, social links
+- `faq.tsx` - Searchable FAQ with categories and expandable answers
+- `hiring.tsx` - Job listings with department filtering and application flow
+
+**Utility Screens:**
+- `auth.tsx` - Firebase authentication flow
+- `+not-found.tsx` - 404/error page
+
+### Data Architecture
+- **Static Data**: Course listings, FAQ items, job postings defined in respective screen files
+- **Dynamic Data**: Cart state, user authentication, form submissions
+- **No Backend Integration**: Currently uses mock data and alert-based form submissions
+
+### Component Patterns
+- **Reusable UI Components**: Consistent styling and behavior across screens  
+- **Context Providers**: Wrap entire app for global state access
+- **TypeScript Interfaces**: Strong typing for data structures (Course, CartItem, FAQItem, JobListing)
+- **Responsive Design**: Adapts to different screen sizes using Dimensions API
+
+### Key Development Patterns
+- Use `useRouter()` from expo-router for navigation
+- Access cart functionality via `useCart()` hook
+- Follow AppColors constants for consistent theming
+- Implement smooth animations using React Native's Animated API
+- Use SafeAreaView for proper screen boundaries
+- Handle form validation with Alert feedback

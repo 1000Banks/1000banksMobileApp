@@ -1,4 +1,4 @@
-package com.example.banks1000
+package com.1000banks
 
 import android.app.Application
 import android.content.res.Configuration

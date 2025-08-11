@@ -4,7 +4,12 @@
       "Bash(npm run:*)",
       "Bash(npm install:*)",
       "Bash(mv:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npx expo install:*)",
+      "Bash(npx expo run:android:*)",
+      "Bash(./android/gradlew:*)",
+      "Bash(npx expo prebuild:*)",
+      "Bash(npx expo start:*)"
     ],
     "deny": []
   }
