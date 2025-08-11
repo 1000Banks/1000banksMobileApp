@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 // import MaskedView from '@react-native-masked-view/masked-view';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -14,6 +14,8 @@ import {
   View
 } from 'react-native';
 // import Svg, { Text as SvgText, Path, G } from 'react-native-svg';
+import BottomTabs from '@/components/BottomTabs';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import SplashScreen from '../components/SplashScreen';
 import { AppColors } from '../constants/Colors';
 import { useCart } from '../contexts/CartContext';
@@ -21,10 +23,17 @@ import CoursesScreen from './courses';
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('home');
+  const [hasShownSplash, setHasShownSplash] = useState(false);
   const { cartItems, addToCart, getCartCount } = useCart();
+
+  useEffect(() => {
+    // Only show splash screen on first load
+    if (!hasShownSplash) {
+      setShowSplash(true);
+    }
+  }, []);
 
   const handleGetStarted = () => {
     router.push('/auth');
@@ -109,7 +118,7 @@ export default function HomeScreen() {
       <View style={styles.merchSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Our Merchandise</Text>
-          <TouchableOpacity onPress={() => setActiveTab('shop')}>
+          <TouchableOpacity onPress={() => router.push('/shop')}>
             <Text style={styles.shopNowText}>Shop Now</Text>
           </TouchableOpacity>
         </View>
@@ -198,11 +207,14 @@ export default function HomeScreen() {
   };
 
   if (showSplash) {
-    return <SplashScreen onAnimationComplete={() => setShowSplash(false)} />;
+    return <SplashScreen onAnimationComplete={() => {
+      setShowSplash(false);
+      setHasShownSplash(true);
+    }} />;
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor={AppColors.background.dark} />
       
       {/* Header with Menu */}
@@ -272,57 +284,12 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {activeTab === 'shop' || activeTab === 'courses' ? (
-        renderTabContent()
-      ) : (
-        <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {renderTabContent()}
-        </ScrollView>
-      )}
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {renderHomeContent()}
+      </ScrollView>
 
-      {/* Bottom Tab Bar */}
-      <View style={styles.bottomTabBar}>
-        <TouchableOpacity 
-          style={[styles.tabItem, activeTab === 'home' && styles.activeTab]}
-          onPress={() => setActiveTab('home')}
-        >
-          <Text style={styles.tabIcon}>🏠</Text>
-          <Text style={[styles.tabText, activeTab === 'home' && styles.activeTabText]}>Home</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.tabItem, activeTab === 'courses' && styles.activeTab]}
-          onPress={() => setActiveTab('courses')}
-        >
-          <Text style={styles.tabIcon}>📚</Text>
-          <Text style={[styles.tabText, activeTab === 'courses' && styles.activeTabText]}>Courses</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.tabItem, activeTab === 'shop' && styles.activeTab]}
-          onPress={() => setActiveTab('shop')}
-        >
-          <Text style={styles.tabIcon}>🛍️</Text>
-          <Text style={[styles.tabText, activeTab === 'shop' && styles.activeTabText]}>Shop</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.tabItem, activeTab === 'trading' && styles.activeTab]}
-          onPress={() => setActiveTab('trading')}
-        >
-          <Text style={styles.tabIcon}>📈</Text>
-          <Text style={[styles.tabText, activeTab === 'trading' && styles.activeTabText]}>Trading</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.tabItem, activeTab === 'account' && styles.activeTab]}
-          onPress={() => router.push('/account')}
-        >
-          <Text style={styles.tabIcon}>👤</Text>
-          <Text style={[styles.tabText, activeTab === 'account' && styles.activeTabText]}>Account</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      <BottomTabs />
+    </SafeAreaView>
   );
 }
 
