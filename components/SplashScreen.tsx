@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
+  Image,
 } from 'react-native';
 import { AppColors } from '../constants/Colors';
 
@@ -12,19 +13,25 @@ const { width, height } = Dimensions.get('window');
 
 interface SplashScreenProps {
   onAnimationComplete: () => void;
+  loadingProgress?: number; // 0-100
+  loadingText?: string;
 }
 
-const SplashScreen: React.FC<SplashScreenProps> = ({ onAnimationComplete }) => {
+const SplashScreen: React.FC<SplashScreenProps> = ({ 
+  onAnimationComplete, 
+  loadingProgress = 0, 
+  loadingText = 'Loading...' 
+}) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const loadingWidth = useRef(new Animated.Value(0)).current;
 
 useEffect(() => {
-  // Parallel animations
+  // Simple entrance animations - fade in and scale up once
   Animated.parallel([
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 1000,
+      duration: 800,
       useNativeDriver: true,
     }),
     Animated.spring(scaleAnim, {
@@ -33,19 +40,27 @@ useEffect(() => {
       friction: 2,
       useNativeDriver: true,
     }),
-    Animated.timing(loadingWidth, {
-      toValue: width * 0.6, // match loadingBar width
-      duration: 2500,
-      useNativeDriver: false, // width animation must not use native driver
-    }),
   ]).start();
+}, [fadeAnim, scaleAnim]);
 
-  const timer = setTimeout(() => {
-    onAnimationComplete();
-  }, 3000);
+// Update loading progress
+useEffect(() => {
+  Animated.timing(loadingWidth, {
+    toValue: (loadingProgress / 100) * width * 0.6,
+    duration: 300,
+    useNativeDriver: false,
+  }).start();
+}, [loadingProgress, loadingWidth]);
 
-  return () => clearTimeout(timer);
-}, [fadeAnim, scaleAnim, loadingWidth, onAnimationComplete]);
+// Complete loading when progress reaches 100%
+useEffect(() => {
+  if (loadingProgress >= 100) {
+    const timer = setTimeout(() => {
+      onAnimationComplete();
+    }, 500); // Small delay after loading complete
+    return () => clearTimeout(timer);
+  }
+}, [loadingProgress, onAnimationComplete]);
 
 
   return (
@@ -59,22 +74,26 @@ useEffect(() => {
           },
         ]}
       >
-        <Text style={styles.logoText}>1000</Text>
-        <Text style={styles.logoSubText}>BANKS</Text>
+        <Image 
+          source={require('../assets/images/logo.webp')} 
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
       </Animated.View>
       
-      <Animated.View style={[styles.taglineContainer, { opacity: fadeAnim }]}>
+      <Animated.View style={[styles.loadingContainer, { opacity: fadeAnim }]}>
+        <Text style={styles.loadingText}>{loadingText}</Text>
         <View style={styles.loadingBar}>
           <Animated.View
-  style={[
-    styles.loadingProgress,
-    {
-      width: loadingWidth,
-    },
-  ]}
-/>
-
+            style={[
+              styles.loadingProgress,
+              {
+                width: loadingWidth,
+              },
+            ]}
+          />
         </View>
+        <Text style={styles.progressText}>{Math.round(loadingProgress)}%</Text>
       </Animated.View>
     </View>
   );
@@ -89,37 +108,40 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: 100,
   },
-  logoText: {
-    fontSize: 48,
-    fontWeight: '700',
-    color: AppColors.primary,
-    letterSpacing: -1,
+  logoImage: {
+    width: 200,
+    height: 120,
   },
-  logoSubText: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: AppColors.text.primary,
-    letterSpacing: 3,
-    marginTop: -10,
-  },
-  taglineContainer: {
+  loadingContainer: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 100,
     alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+    marginBottom: 20,
+    fontWeight: '500',
   },
   loadingBar: {
     width: width * 0.6,
-    height: 3,
+    height: 4,
     backgroundColor: AppColors.background.card,
-    borderRadius: 2,
+    borderRadius: 3,
     overflow: 'hidden',
+    marginBottom: 10,
   },
   loadingProgress: {
     height: '100%',
     backgroundColor: AppColors.primary,
-    borderRadius: 2,
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 14,
+    color: AppColors.text.secondary,
+    fontWeight: '600',
   },
 });
 

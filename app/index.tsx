@@ -20,22 +20,21 @@ import SplashScreen from '../components/SplashScreen';
 import BottomTabs from '../components/BottomTabs';
 import { AppColors } from '../constants/Colors';
 import { useCart } from '../contexts/CartContext';
+import { useResourceLoader } from '../hooks/useResourceLoader';
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
-  const [showSplash, setShowSplash] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hasShownSplash, setHasShownSplash] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  const [isVideoVisible, setIsVideoVisible] = useState(false);
   const { cartItems, addToCart, getCartCount } = useCart();
   const videoRef = useRef<Video>(null);
+  const videoContainerRef = useRef<View>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const { progress, isLoading, loadingText } = useResourceLoader();
 
-  useEffect(() => {
-    // Only show splash screen on first load
-    if (!hasShownSplash) {
-      setShowSplash(true);
-    }
-  }, []);
+  // Show splash screen while resources are loading
+  const showSplash = isLoading;
 
   const handleGetStarted = () => {
     router.push('/auth');
@@ -47,6 +46,33 @@ export default function HomeScreen() {
 
   const handleSignUp = () => {
     router.push('/auth');
+  };
+
+  // Handle scroll to check video visibility
+  const handleScroll = (event: any) => {
+    const { contentOffset } = event.nativeEvent;
+    const scrollY = contentOffset.y;
+    const windowHeight = Dimensions.get('window').height;
+    
+    // Approximate video position (you can adjust these values based on your layout)
+    const videoStartY = 400; // Approximate Y position where video starts
+    const videoEndY = videoStartY + 240; // Video height is 240
+    
+    // Check if video is in view
+    const isVisible = scrollY < videoEndY && (scrollY + windowHeight) > videoStartY;
+    
+    if (isVisible !== isVideoVisible) {
+      setIsVideoVisible(isVisible);
+      
+      // Auto-play/pause video based on visibility
+      if (videoRef.current) {
+        if (isVisible) {
+          videoRef.current.playAsync();
+        } else {
+          videoRef.current.pauseAsync();
+        }
+      }
+    }
   };
 
   // Sample merch data
@@ -100,33 +126,29 @@ export default function HomeScreen() {
             <View style={[styles.crackLine, { left: '75%', transform: [{ rotate: '-15deg' }] }]} />
           </View>
         </View>
-        <View style={styles.videoContainer}>
-          <View style={styles.videoPlaceholder}>
-            {/* <Text style={styles.videoPlayButton}>▶️</Text>
-            <Text style={styles.videoText}>Video Content</Text> */}
-            {videoError ? (
-              <View style={{ width: "100%", height: 240, backgroundColor: AppColors.background.card, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 48, marginBottom: 8 }}>📹</Text>
-                <Text style={{ fontSize: 16, color: AppColors.text.primary, fontWeight: '600' }}>Financial Breakthrough Video</Text>
-                <Text style={{ fontSize: 14, color: AppColors.text.secondary, marginTop: 4 }}>Video Unavailable</Text>
-              </View>
-            ) : (
-              <Video
-                ref={videoRef}
-                source={require('@/assets/images/Final_Funds_Vision_Book.mp4')}
-                style={{ width: '100%', height: 240 }}
-                resizeMode={ResizeMode.CONTAIN}
-                isLooping
-                shouldPlay={false}
-                useNativeControls
-                onError={(error) => {
-                  console.warn('Video error:', error);
-                  setVideoError(true);
-                }}
-                onLoad={() => console.log('Video loaded successfully')}
-              />
-            )}
-          </View>
+        <View style={styles.videoContainer} ref={videoContainerRef}>
+          {videoError ? (
+            <View style={styles.videoErrorContainer}>
+              <Text style={{ fontSize: 48, marginBottom: 8 }}>📹</Text>
+              <Text style={{ fontSize: 16, color: AppColors.text.primary, fontWeight: '600' }}>Financial Breakthrough Video</Text>
+              <Text style={{ fontSize: 14, color: AppColors.text.secondary, marginTop: 4 }}>Video Unavailable</Text>
+            </View>
+          ) : (
+            <Video
+              ref={videoRef}
+              source={require('@/assets/images/Final_Funds_Vision_Book.mp4')}
+              style={styles.video}
+              resizeMode={ResizeMode.CONTAIN}
+              isLooping
+              shouldPlay={isVideoVisible}
+              useNativeControls
+              onError={(error) => {
+                console.warn('Video error:', error);
+                setVideoError(true);
+              }}
+              onLoad={() => console.log('Video loaded successfully')}
+            />
+          )}
         </View>
       </View>
 
@@ -166,10 +188,15 @@ export default function HomeScreen() {
 
 
   if (showSplash) {
-    return <SplashScreen onAnimationComplete={() => {
-      setShowSplash(false);
-      setHasShownSplash(true);
-    }} />;
+    return (
+      <SplashScreen 
+        onAnimationComplete={() => {
+          // This will be called when loading is complete
+        }}
+        loadingProgress={progress}
+        loadingText={loadingText}
+      />
+    );
   }
 
   return (
@@ -242,7 +269,13 @@ export default function HomeScreen() {
           </View>
         </View>
       )}
-      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={100}
+      >
         {renderHomeContent()}
       </ScrollView>
       
@@ -471,23 +504,22 @@ const styles = StyleSheet.create({
   },
   videoContainer: {
     position: 'relative',
-    height: 200,
+    height: 240,
     borderRadius: 16,
     overflow: 'hidden',
+    marginHorizontal: 20,
   },
-  videoPlaceholder: {
+  video: {
+    width: '100%',
+    height: 240,
+  },
+  videoErrorContainer: {
     flex: 1,
     backgroundColor: AppColors.background.card,
-    justifyContent: 'center',
+    borderRadius: 12,
     alignItems: 'center',
-  },
-  videoPlayButton: {
-    fontSize: 48,
-    marginBottom: 8,
-  },
-  videoText: {
-    fontSize: 16,
-    color: AppColors.text.secondary,
+    justifyContent: 'center',
+    height: 240,
   },
   breakthroughTextContainer: {
     position: 'absolute',
