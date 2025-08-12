@@ -21,8 +21,9 @@ export default function SignInScreen() {
     try {
       await auth().signInWithEmailAndPassword(email, password);
       console.log('User signed in!');
-      Alert.alert('Success', 'Signed in successfully!');
-      router.back();
+      Alert.alert('Success', 'Signed in successfully!', [
+        { text: 'OK', onPress: () => router.replace('/') }
+      ]);
     } catch (error: any) {
       console.error('Sign in error:', error);
       let message = 'Failed to sign in';

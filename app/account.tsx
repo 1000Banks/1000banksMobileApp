@@ -13,6 +13,8 @@ import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import BottomTabs from '@/components/BottomTabs';
 import AppHeader from '@/components/AppHeader';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'expo-router';
 
 interface Course {
   id: string;
@@ -78,6 +80,52 @@ const mockOrders: Order[] = [
 
 const AccountScreen = () => {
   const [activeTab, setActiveTab] = useState<'learnings' | 'orders' | 'profile'>('learnings');
+  const { user, signOut, loading } = useAuth();
+  const router = useRouter();
+
+  // If user is not authenticated, show sign-in prompt
+  if (!loading && !user) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <AppHeader title="Account" showBackButton={false} />
+        <View style={styles.signInPrompt}>
+          <Ionicons name="person-circle-outline" size={80} color={AppColors.primary} />
+          <Text style={styles.signInTitle}>Sign In to Your Account</Text>
+          <Text style={styles.signInSubtitle}>
+            Access your courses, orders, and profile information
+          </Text>
+          <TouchableOpacity 
+            style={styles.signInButton}
+            onPress={() => router.push('/sign-in')}
+          >
+            <Text style={styles.signInButtonText}>Sign In</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.signUpButton}
+            onPress={() => router.push('/sign-up')}
+          >
+            <Text style={styles.signUpButtonText}>Create Account</Text>
+          </TouchableOpacity>
+        </View>
+        <BottomTabs />
+      </SafeAreaView>
+    );
+  }
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Sign Out', 
+          style: 'destructive',
+          onPress: () => signOut()
+        },
+      ]
+    );
+  };
 
   const renderLearnings = () => (
     <View style={styles.tabContent}>
@@ -139,10 +187,19 @@ const AccountScreen = () => {
       {/* Profile Card */}
       <View style={styles.profileCard}>
         <View style={styles.profileAvatar}>
-          <Ionicons name="person" size={50} color={AppColors.primary} />
+          {user?.photoURL ? (
+            <Image source={{ uri: user.photoURL }} style={styles.avatarImage} />
+          ) : (
+            <Ionicons name="person" size={50} color={AppColors.primary} />
+          )}
         </View>
-        <Text style={styles.profileName}>John Doe</Text>
-        <Text style={styles.profileEmail}>john.doe@example.com</Text>
+        <Text style={styles.profileName}>
+          {user?.displayName || user?.email?.split('@')[0] || 'User'}
+        </Text>
+        <Text style={styles.profileEmail}>{user?.email}</Text>
+        <Text style={styles.providerInfo}>
+          Signed in with {user?.providerData[0]?.providerId === 'google.com' ? 'Google' : 'Email'}
+        </Text>
         <TouchableOpacity 
           style={styles.editProfileButton}
           onPress={() => Alert.alert('Edit Profile', 'Profile editing will be available soon')}
@@ -183,13 +240,10 @@ const AccountScreen = () => {
 
         <TouchableOpacity 
           style={[styles.settingItem, styles.logoutItem]}
-          onPress={() => Alert.alert('Logout', 'Are you sure you want to logout?', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Logout', style: 'destructive' },
-          ])}
+          onPress={handleSignOut}
         >
           <Ionicons name="log-out" size={24} color={AppColors.error} />
-          <Text style={[styles.settingText, { color: AppColors.error }]}>Logout</Text>
+          <Text style={[styles.settingText, { color: AppColors.error }]}>Sign Out</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -449,6 +503,66 @@ const styles = StyleSheet.create({
   },
   logoutItem: {
     borderBottomWidth: 0,
+  },
+  signInPrompt: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  signInTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: AppColors.text.primary,
+    marginTop: 24,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  signInSubtitle: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  signInButton: {
+    backgroundColor: AppColors.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 48,
+    marginBottom: 16,
+    width: '100%',
+    alignItems: 'center',
+  },
+  signInButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.background.dark,
+  },
+  signUpButton: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 48,
+    borderWidth: 1.5,
+    borderColor: AppColors.primary,
+    width: '100%',
+    alignItems: 'center',
+  },
+  signUpButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.primary,
+  },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  providerInfo: {
+    fontSize: 14,
+    color: AppColors.text.secondary,
+    marginBottom: 20,
   },
 });
 

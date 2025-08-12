@@ -32,8 +32,9 @@ export default function SignUpScreen() {
     try {
       await auth().createUserWithEmailAndPassword(email, password);
       console.log('User account created & signed in!');
-      Alert.alert('Success', 'Account created successfully!');
-      router.back();
+      Alert.alert('Success', 'Account created successfully!', [
+        { text: 'OK', onPress: () => router.replace('/') }
+      ]);
     } catch (error: any) {
       console.error('Sign up error:', error);
       let message = 'Failed to create account';
