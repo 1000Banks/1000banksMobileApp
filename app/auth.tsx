@@ -1,70 +1,76 @@
+import { Ionicons } from '@expo/vector-icons';
+import auth from '@react-native-firebase/auth';
 import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, TouchableOpacity, StatusBar } from 'react-native';
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { Alert, KeyboardAvoidingView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppColors } from '../constants/Colors';
 
 export default function AuthScreen() {
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSignUp = async() => {
+  const handleSignUp = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter email and password');
+      return;
+    }
+
     setLoading(true);
     try {
       await auth().createUserWithEmailAndPassword(email, password);
       console.log('User account created & signed in!');
-    } catch (error) {
-      const firebaseError = error as FirebaseAuthTypes.AuthError;
-      if (firebaseError && firebaseError.code) {
-        switch (firebaseError.code) {
-          case 'auth/email-already-in-use':
-            console.error('That email address is already in use!');
-            break;
-          case 'auth/invalid-email':
-            console.error('That email address is invalid!');
-            break;
-          case 'auth/weak-password':
-            console.error('Password is too weak!');
-            break;
-          default:
-            console.error('Authentication error:', firebaseError.code, firebaseError.message);
-        }
-      } else {
-        console.error('Unexpected error:', error);
+      Alert.alert('Success', 'Account created successfully!');
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      let message = 'Failed to create account';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        message = 'That email address is already in use!';
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'That email address is invalid!';
+      } else if (error.code === 'auth/weak-password') {
+        message = 'Password should be at least 6 characters';
       }
+      
+      Alert.alert('Sign Up Error', message);
     }
     setLoading(false);
   };
-  const handleSignIn = async() => {
+
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter email and password');
+      return;
+    }
+
     setLoading(true);
     try {
       await auth().signInWithEmailAndPassword(email, password);
       console.log('User signed in!');
-    } catch (error) {
-      const firebaseError = error as FirebaseAuthTypes.AuthError;
-      if (firebaseError && firebaseError.code) {
-        switch (firebaseError.code) {
-          case 'auth/user-not-found':
-            console.error('No user found with this email address!');
-            break;
-          case 'auth/wrong-password':
-            console.error('Incorrect password!');
-            break;
-          case 'auth/invalid-email':
-            console.error('Invalid email format!');
-            break;
-          case 'auth/user-disabled':
-            console.error('User account has been disabled!');
-            break;
-          default:
-            console.error('Authentication error:', firebaseError.code, firebaseError.message);
-        }
-      } else {
-        console.error('Unexpected error:', error);
+      Alert.alert('Success', 'Signed in successfully!');
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      let message = 'Failed to sign in';
+      
+      if (error.code === 'auth/user-not-found') {
+        message = 'No user found with this email address!';
+      } else if (error.code === 'auth/wrong-password') {
+        message = 'Incorrect password!';
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'Invalid email format!';
       }
+      
+      Alert.alert('Sign In Error', message);
     }
     setLoading(false);
+  };
+
+  const handleGoogleSignIn = () => {
+    Alert.alert(
+      'Google Sign-In',
+      'Google Sign-In requires additional setup. For now, please use email/password authentication.',
+      [{ text: 'OK' }]
+    );
   };
 
   return (
@@ -112,7 +118,7 @@ export default function AuthScreen() {
           disabled={loading}
         >
           <Text style={styles.primaryButtonText}>
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loading ? 'Processing...' : 'Sign In'}
           </Text>
         </TouchableOpacity>
 
@@ -122,7 +128,24 @@ export default function AuthScreen() {
           disabled={loading}
         >
           <Text style={styles.secondaryButtonText}>
-            {loading ? 'Creating Account...' : 'Create Account'}
+            {loading ? 'Processing...' : 'Create Account'}
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.dividerContainer}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.divider} />
+        </View>
+
+        <TouchableOpacity
+          style={styles.googleButton}
+          onPress={handleGoogleSignIn}
+          disabled={loading}
+        >
+          <Ionicons name="logo-google" size={20} color="#4285F4" style={styles.googleIcon} />
+          <Text style={styles.googleButtonText}>
+            Continue with Google
           </Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>
@@ -211,5 +234,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: AppColors.primary,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: AppColors.background.card,
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    fontSize: 14,
+    color: AppColors.text.secondary,
+    fontWeight: '500',
+  },
+  googleButton: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#DADCE0',
+  },
+  googleIcon: {
+    marginRight: 12,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#3C4043',
   },
 });
