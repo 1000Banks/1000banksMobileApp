@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 // import MaskedView from '@react-native-masked-view/masked-view';
+import { ResizeMode, Video } from "expo-av";
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -27,6 +28,7 @@ export default function HomeScreen() {
   const [hasShownSplash, setHasShownSplash] = useState(false);
   const [activeTab, setActiveTab] = useState<'home' | 'shop' | 'courses' | 'trading' | 'settings'>('home');
   const { cartItems, addToCart, getCartCount } = useCart();
+  const video = useRef<Video>(null);
 
   useEffect(() => {
     // Only show splash screen on first load
@@ -100,8 +102,22 @@ export default function HomeScreen() {
         </View>
         <View style={styles.videoContainer}>
           <View style={styles.videoPlaceholder}>
-            <Text style={styles.videoPlayButton}>▶️</Text>
-            <Text style={styles.videoText}>Video Content</Text>
+            {/* <Text style={styles.videoPlayButton}>▶️</Text>
+            <Text style={styles.videoText}>Video Content</Text> */}
+            <View style={{ flex: 1, backgroundColor: "#000", justifyContent: "center" }}>
+      <Video
+        ref={video}
+        style={{ width: "100%", height: 240 }}
+        source={
+          require("@/assets/images/Final_Funds_Vision_Book.mp4")
+        }
+        useNativeControls
+        resizeMode={ResizeMode.CONTAIN}
+        isLooping
+        shouldPlay={false} // set true to autoplay
+        onError={(e) => console.warn("Video error", e)}
+      />
+    </View>
           </View>
         </View>
       </View>
