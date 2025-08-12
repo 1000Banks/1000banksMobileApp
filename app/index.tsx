@@ -17,16 +17,15 @@ import {
 // import Svg, { Text as SvgText, Path, G } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SplashScreen from '../components/SplashScreen';
+import BottomTabs from '../components/BottomTabs';
 import { AppColors } from '../constants/Colors';
 import { useCart } from '../contexts/CartContext';
-import CoursesScreen from './courses';
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [showSplash, setShowSplash] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasShownSplash, setHasShownSplash] = useState(false);
-  const [activeTab, setActiveTab] = useState<'home' | 'shop' | 'courses' | 'trading' | 'settings'>('home');
   const { cartItems, addToCart, getCartCount } = useCart();
   const video = useRef<Video>(null);
 
@@ -156,71 +155,6 @@ export default function HomeScreen() {
     </>
   );
 
-  const renderShopContent = () => (
-    <View style={styles.shopContainer}>
-      <View style={styles.shopHeader}>
-        <Text style={styles.shopTitle}>1000Banks Merchandise</Text>
-        <Text style={styles.shopSubtitle}>Premium quality items to support your journey</Text>
-      </View>
-      
-      <FlatList
-        data={merchData}
-        numColumns={2}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.shopItemCard}>
-            <Text style={styles.shopItemImage}>{item.image}</Text>
-            <Text style={styles.shopItemName}>{item.name}</Text>
-            <Text style={styles.shopItemDescription}>{item.description}</Text>
-            <Text style={styles.shopItemPrice}>{item.price}</Text>
-            <TouchableOpacity 
-              style={styles.addToCartButton}
-              onPress={() => addToCart({
-                id: item.id,
-                name: item.name,
-                price: item.price,
-                type: 'product',
-                image: item.image,
-                description: item.description
-              })}
-            >
-              <Text style={styles.addToCartText}>Add to Cart</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        contentContainerStyle={styles.shopGrid}
-        columnWrapperStyle={styles.shopRow}
-      />
-    </View>
-  );
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'home':
-        return renderHomeContent();
-      case 'shop':
-        return renderShopContent();
-      case 'courses':
-        return <CoursesScreen embedded={true} />;
-      case 'trading':
-        return (
-          <View style={styles.placeholderContent}>
-            <Text style={styles.placeholderTitle}>Trading</Text>
-            <Text style={styles.placeholderText}>Coming Soon!</Text>
-          </View>
-        );
-      case 'settings':
-        return (
-          <View style={styles.placeholderContent}>
-            <Text style={styles.placeholderTitle}>Settings</Text>
-            <Text style={styles.placeholderText}>Coming Soon!</Text>
-          </View>
-        );
-      default:
-        return renderHomeContent();
-    }
-  };
 
   if (showSplash) {
     return <SplashScreen onAnimationComplete={() => {
@@ -300,8 +234,10 @@ export default function HomeScreen() {
         </View>
       )}
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {renderTabContent()}
+        {renderHomeContent()}
       </ScrollView>
+      
+      <BottomTabs />
     </SafeAreaView>
   );
 }
@@ -636,125 +572,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: AppColors.primary,
-  },
-  bottomTabBar: {
-    flexDirection: 'row',
-    backgroundColor: AppColors.background.card,
-    paddingBottom: 20,
-    paddingTop: 12,
-    paddingHorizontal: 16,
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  activeTab: {
-    backgroundColor: AppColors.primary + '20',
-  },
-  tabIcon: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  tabText: {
-    fontSize: 12,
-    color: AppColors.text.secondary,
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: AppColors.primary,
-    fontWeight: '600',
-  },
-  // Shop Screen Styles
-  shopContainer: {
-    flex: 1,
-  },
-  shopHeader: {
-    paddingHorizontal: 20,
-    paddingVertical: 32,
-    alignItems: 'center',
-  },
-  shopTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: AppColors.text.primary,
-    marginBottom: 8,
-  },
-  shopSubtitle: {
-    fontSize: 16,
-    color: AppColors.text.secondary,
-    textAlign: 'center',
-  },
-  shopGrid: {
-    paddingHorizontal: 16,
-  },
-  shopRow: {
-    justifyContent: 'space-between',
-  },
-  shopItemCard: {
-    backgroundColor: AppColors.background.card,
-    borderRadius: 16,
-    padding: 16,
-    width: (width - 48) / 2,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  shopItemImage: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  shopItemName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: AppColors.text.primary,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  shopItemDescription: {
-    fontSize: 12,
-    color: AppColors.text.secondary,
-    textAlign: 'center',
-    marginBottom: 12,
-    lineHeight: 16,
-  },
-  shopItemPrice: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: AppColors.primary,
-    marginBottom: 12,
-  },
-  addToCartButton: {
-    backgroundColor: AppColors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-    width: '100%',
-    alignItems: 'center',
-  },
-  addToCartText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: AppColors.background.dark,
-  },
-  // Placeholder Content Styles
-  placeholderContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 100,
-  },
-  placeholderTitle: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: AppColors.text.primary,
-    marginBottom: 16,
-  },
-  placeholderText: {
-    fontSize: 18,
-    color: AppColors.text.secondary,
-    textAlign: 'center',
   },
   brokenTextContainer: {
     height: 80,
