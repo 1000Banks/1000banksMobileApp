@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 // import MaskedView from '@react-native-masked-view/masked-view';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
+import { Video, ResizeMode } from 'expo-av';
 import {
   Dimensions,
   FlatList,
@@ -25,7 +26,9 @@ export default function HomeScreen() {
   const [showSplash, setShowSplash] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasShownSplash, setHasShownSplash] = useState(false);
+  const [videoError, setVideoError] = useState(false);
   const { cartItems, addToCart, getCartCount } = useCart();
+  const videoRef = useRef<Video>(null);
 
   useEffect(() => {
     // Only show splash screen on first load
@@ -101,11 +104,28 @@ export default function HomeScreen() {
           <View style={styles.videoPlaceholder}>
             {/* <Text style={styles.videoPlayButton}>▶️</Text>
             <Text style={styles.videoText}>Video Content</Text> */}
-            <View style={{ width: "100%", height: 240, backgroundColor: AppColors.background.card, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 48, marginBottom: 8 }}>📹</Text>
-              <Text style={{ fontSize: 16, color: AppColors.text.primary, fontWeight: '600' }}>Financial Breakthrough Video</Text>
-              <Text style={{ fontSize: 14, color: AppColors.text.secondary, marginTop: 4 }}>Coming Soon</Text>
-            </View>
+            {videoError ? (
+              <View style={{ width: "100%", height: 240, backgroundColor: AppColors.background.card, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 48, marginBottom: 8 }}>📹</Text>
+                <Text style={{ fontSize: 16, color: AppColors.text.primary, fontWeight: '600' }}>Financial Breakthrough Video</Text>
+                <Text style={{ fontSize: 14, color: AppColors.text.secondary, marginTop: 4 }}>Video Unavailable</Text>
+              </View>
+            ) : (
+              <Video
+                ref={videoRef}
+                source={require('@/assets/images/Final_Funds_Vision_Book.mp4')}
+                style={{ width: '100%', height: 240 }}
+                resizeMode={ResizeMode.CONTAIN}
+                isLooping
+                shouldPlay={false}
+                useNativeControls
+                onError={(error) => {
+                  console.warn('Video error:', error);
+                  setVideoError(true);
+                }}
+                onLoad={() => console.log('Video loaded successfully')}
+              />
+            )}
           </View>
         </View>
       </View>
