@@ -37,15 +37,15 @@ export default function HomeScreen() {
   const showSplash = isLoading;
 
   const handleGetStarted = () => {
-    router.push('/auth');
+    router.push('/sign-up');
   };
 
   const handleSignIn = () => {
-    router.push('/auth');
+    router.push('/sign-in');
   };
 
   const handleSignUp = () => {
-    router.push('/auth');
+    router.push('/sign-up');
   };
 
   // Handle scroll to check video visibility

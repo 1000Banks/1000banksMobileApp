@@ -228,7 +228,7 @@ const AboutScreen = () => {
         </Text>
         <TouchableOpacity 
           style={styles.ctaButton}
-          onPress={() => router.push('/auth')}
+          onPress={() => router.push('/sign-up')}
         >
           <Text style={styles.ctaButtonText}>Get Started Today</Text>
         </TouchableOpacity>

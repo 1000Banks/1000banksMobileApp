@@ -32,11 +32,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleSignIn = () => {
-    router.push('/auth');
+    router.push('/sign-in');
   };
 
   const handleSignUp = () => {
-    router.push('/auth');
+    router.push('/sign-up');
   };
 
   if (showMenuAndCart) {
