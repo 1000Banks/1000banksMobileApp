@@ -323,7 +323,7 @@ const CoursesScreen: React.FC<CoursesScreenProps> = ({ embedded = false }) => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <AppHeader title="Courses" showBackButton={false} />
+      <AppHeader showMenuAndCart={true} />
       <CourseContent />
       <BottomTabs />
     </SafeAreaView>

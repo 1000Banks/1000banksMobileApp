@@ -33,7 +33,7 @@ const ShopScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <AppHeader title="Shop" showBackButton={false} />
+      <AppHeader showMenuAndCart={true} />
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.shopHeader}>
           <Text style={styles.shopTitle}>1000Banks Merchandise</Text>

@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 // import MaskedView from '@react-native-masked-view/masked-view';
-import { ResizeMode, Video } from "expo-av";
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -27,7 +26,6 @@ export default function HomeScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasShownSplash, setHasShownSplash] = useState(false);
   const { cartItems, addToCart, getCartCount } = useCart();
-  const video = useRef<Video>(null);
 
   useEffect(() => {
     // Only show splash screen on first load
@@ -103,20 +101,11 @@ export default function HomeScreen() {
           <View style={styles.videoPlaceholder}>
             {/* <Text style={styles.videoPlayButton}>▶️</Text>
             <Text style={styles.videoText}>Video Content</Text> */}
-            <View style={{ flex: 1, backgroundColor: "#000", justifyContent: "center" }}>
-      <Video
-        ref={video}
-        style={{ width: "100%", height: 240 }}
-        source={
-          require("@/assets/images/Final_Funds_Vision_Book.mp4")
-        }
-        useNativeControls
-        resizeMode={ResizeMode.CONTAIN}
-        isLooping
-        shouldPlay={false} // set true to autoplay
-        onError={(e) => console.warn("Video error", e)}
-      />
-    </View>
+            <View style={{ width: "100%", height: 240, backgroundColor: AppColors.background.card, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 48, marginBottom: 8 }}>📹</Text>
+              <Text style={{ fontSize: 16, color: AppColors.text.primary, fontWeight: '600' }}>Financial Breakthrough Video</Text>
+              <Text style={{ fontSize: 14, color: AppColors.text.secondary, marginTop: 4 }}>Coming Soon</Text>
+            </View>
           </View>
         </View>
       </View>

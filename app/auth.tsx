@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, TouchableOpacity, StatusBar } from 'react-native';
-import {FirebaseError} from 'firebase/app'
-import auth from '@react-native-firebase/auth';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { AppColors } from '../constants/Colors';
 
 export default function AuthScreen() {
@@ -12,40 +11,60 @@ export default function AuthScreen() {
 
   const handleSignUp = async() => {
     setLoading(true);
-    await auth().createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        console.log('User account created & signed in!');
-      })
-      .catch((error: FirebaseError) => {
-        if (error.code === 'auth/email-already-in-use') {
-          console.error('That email address is already in use!');
-        } else if (error.code === 'auth/invalid-email') {
-          console.error('That email address is invalid!');
-        } else {
-          console.error(error);
+    try {
+      await auth().createUserWithEmailAndPassword(email, password);
+      console.log('User account created & signed in!');
+    } catch (error) {
+      const firebaseError = error as FirebaseAuthTypes.AuthError;
+      if (firebaseError && firebaseError.code) {
+        switch (firebaseError.code) {
+          case 'auth/email-already-in-use':
+            console.error('That email address is already in use!');
+            break;
+          case 'auth/invalid-email':
+            console.error('That email address is invalid!');
+            break;
+          case 'auth/weak-password':
+            console.error('Password is too weak!');
+            break;
+          default:
+            console.error('Authentication error:', firebaseError.code, firebaseError.message);
         }
-      });
+      } else {
+        console.error('Unexpected error:', error);
+      }
+    }
     setLoading(false);
-
-    // Handle sign up logic here
   };
   const handleSignIn = async() => {
     setLoading(true);
-    await auth().signInWithEmailAndPassword(email, password)
-      .then(() => {
-        console.log('User signed in!');
-      })
-      .catch((error: FirebaseError) => {
-        if (error.code === 'auth/user-not-found') {
-          console.error('No user found with this email address!');
-        } else if (error.code === 'auth/wrong-password') {    
-          console.error('Incorrect password!');
-        } else {
-          console.error(error);
+    try {
+      await auth().signInWithEmailAndPassword(email, password);
+      console.log('User signed in!');
+    } catch (error) {
+      const firebaseError = error as FirebaseAuthTypes.AuthError;
+      if (firebaseError && firebaseError.code) {
+        switch (firebaseError.code) {
+          case 'auth/user-not-found':
+            console.error('No user found with this email address!');
+            break;
+          case 'auth/wrong-password':
+            console.error('Incorrect password!');
+            break;
+          case 'auth/invalid-email':
+            console.error('Invalid email format!');
+            break;
+          case 'auth/user-disabled':
+            console.error('User account has been disabled!');
+            break;
+          default:
+            console.error('Authentication error:', firebaseError.code, firebaseError.message);
         }
-      });
+      } else {
+        console.error('Unexpected error:', error);
+      }
+    }
     setLoading(false);
-    // Handle sign in logic here
   };
 
   return (

@@ -14,6 +14,11 @@ export default function RootLayout() {
         <Stack.Screen name="hiring" />
         <Stack.Screen name="course-detail" />
         <Stack.Screen name="checkout" />
+        <Stack.Screen name="courses" />
+        <Stack.Screen name="shop" />
+        <Stack.Screen name="trading" />
+        <Stack.Screen name="account" />
+        <Stack.Screen name="+not-found" />
       </Stack>
     </CartProvider>
   );
