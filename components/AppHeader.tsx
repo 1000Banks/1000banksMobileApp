@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppColors } from '@/constants/Colors';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -29,6 +30,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const router = useRouter();
   const { getCartCount } = useCart();
+  const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleSignIn = () => {
@@ -61,12 +63,30 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 </View>
               )}
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.menuButton}
-              onPress={() => setMenuOpen(!menuOpen)}
-            >
-              <Text style={styles.menuIcon}>☰</Text>
-            </TouchableOpacity>
+            
+            {user ? (
+              <TouchableOpacity 
+                style={styles.profileButton}
+                onPress={() => setMenuOpen(!menuOpen)}
+              >
+                {user.photoURL ? (
+                  <Image source={{ uri: user.photoURL }} style={styles.userAvatar} />
+                ) : (
+                  <View style={styles.userAvatarPlaceholder}>
+                    <Text style={styles.userInitial}>
+                      {(user.displayName || user.email || 'U')[0].toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                style={styles.menuButton}
+                onPress={() => setMenuOpen(!menuOpen)}
+              >
+                <Text style={styles.menuIcon}>☰</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -96,14 +116,39 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.authButtons}>
-                <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
-                  <Text style={styles.signInButtonText}>Sign In</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
-                  <Text style={styles.signUpButtonText}>Sign Up</Text>
-                </TouchableOpacity>
-              </View>
+              {user ? (
+                <View style={styles.userSection}>
+                  <View style={styles.userInfo}>
+                    {user.photoURL ? (
+                      <Image source={{ uri: user.photoURL }} style={styles.menuUserAvatar} />
+                    ) : (
+                      <View style={styles.menuUserAvatarPlaceholder}>
+                        <Text style={styles.menuUserInitial}>
+                          {(user.displayName || user.email || 'U')[0].toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={styles.userDetails}>
+                      <Text style={styles.userName}>
+                        {user.displayName || user.email?.split('@')[0] || 'User'}
+                      </Text>
+                      <Text style={styles.userEmail}>{user.email}</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity style={styles.signOutButton} onPress={() => { signOut(); setMenuOpen(false); }}>
+                    <Text style={styles.signOutButtonText}>Sign Out</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.authButtons}>
+                  <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
+                    <Text style={styles.signInButtonText}>Sign In</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
+                    <Text style={styles.signUpButtonText}>Sign Up</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </View>
         )}
@@ -270,6 +315,80 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: AppColors.background.dark,
+  },
+  profileButton: {
+    padding: 4,
+  },
+  userAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  userAvatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: AppColors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userInitial: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: AppColors.background.dark,
+  },
+  userSection: {
+    marginTop: 20,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  menuUserAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  menuUserAvatarPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: AppColors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuUserInitial: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: AppColors.background.dark,
+  },
+  userDetails: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: AppColors.text.primary,
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: AppColors.text.secondary,
+  },
+  signOutButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: AppColors.error,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  signOutButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.error,
   },
 });
 

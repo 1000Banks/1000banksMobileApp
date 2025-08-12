@@ -202,7 +202,7 @@ const AccountScreen = () => {
         </Text>
         <TouchableOpacity 
           style={styles.editProfileButton}
-          onPress={() => Alert.alert('Edit Profile', 'Profile editing will be available soon')}
+          onPress={() => router.push('/edit-profile')}
         >
           <Ionicons name="create" size={16} color={AppColors.primary} />
           <Text style={styles.editProfileText}>Edit Profile</Text>
