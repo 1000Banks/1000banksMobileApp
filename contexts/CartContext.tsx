@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import firebaseService from '../services/firebase';
+import auth from '@react-native-firebase/auth';
 
 export interface CartItem {
   id: string;
@@ -18,43 +20,127 @@ interface CartContextType {
   clearCart: () => void;
   getCartTotal: () => number;
   getCartCount: () => number;
+  loading: boolean;
+  syncCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>) => {
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(i => i.id === item.id);
+  useEffect(() => {
+    let unsubscribeCart: (() => void) | undefined;
+
+    const unsubscribeAuth = firebaseService.onAuthStateChanged(async (user) => {
+      if (user) {
+        setLoading(true);
+        try {
+          unsubscribeCart = firebaseService.subscribeToUserCart((items) => {
+            setCartItems(items);
+            setLoading(false);
+          });
+        } catch (error) {
+          console.error('Error loading cart:', error);
+          setLoading(false);
+        }
+      } else {
+        setCartItems([]);
+        setLoading(false);
+        if (unsubscribeCart) {
+          unsubscribeCart();
+          unsubscribeCart = undefined;
+        }
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeCart) {
+        unsubscribeCart();
+      }
+    };
+  }, []);
+
+  const syncCart = async () => {
+    if (!auth().currentUser) return;
+    
+    try {
+      setLoading(true);
+      await firebaseService.saveUserCart(cartItems);
+    } catch (error) {
+      console.error('Error syncing cart:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addToCart = async (item: Omit<CartItem, 'quantity'>) => {
+    const newCartItems = (() => {
+      const existingItem = cartItems.find(i => i.id === item.id);
       if (existingItem) {
-        return prevItems.map(i =>
+        return cartItems.map(i =>
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      return [...prevItems, { ...item, quantity: 1 }];
-    });
+      return [...cartItems, { ...item, quantity: 1 }];
+    })();
+    
+    setCartItems(newCartItems);
+    
+    if (auth().currentUser) {
+      try {
+        await firebaseService.saveUserCart(newCartItems);
+      } catch (error) {
+        console.error('Error saving cart:', error);
+      }
+    }
   };
 
-  const removeFromCart = (id: string) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
+  const removeFromCart = async (id: string) => {
+    const newCartItems = cartItems.filter(item => item.id !== id);
+    setCartItems(newCartItems);
+    
+    if (auth().currentUser) {
+      try {
+        await firebaseService.saveUserCart(newCartItems);
+      } catch (error) {
+        console.error('Error saving cart:', error);
+      }
+    }
   };
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = async (id: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(id);
+      await removeFromCart(id);
       return;
     }
-    setCartItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, quantity } : item
-      )
+    
+    const newCartItems = cartItems.map(item =>
+      item.id === id ? { ...item, quantity } : item
     );
+    setCartItems(newCartItems);
+    
+    if (auth().currentUser) {
+      try {
+        await firebaseService.saveUserCart(newCartItems);
+      } catch (error) {
+        console.error('Error saving cart:', error);
+      }
+    }
   };
 
-  const clearCart = () => {
+  const clearCart = async () => {
     setCartItems([]);
+    
+    if (auth().currentUser) {
+      try {
+        await firebaseService.clearUserCart();
+      } catch (error) {
+        console.error('Error clearing cart:', error);
+      }
+    }
   };
 
   const getCartTotal = () => {
@@ -78,6 +164,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         clearCart,
         getCartTotal,
         getCartCount,
+        loading,
+        syncCart,
       }}
     >
       {children}
