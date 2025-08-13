@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import firebaseService, { User, UserCourseEnrollment, UserPurchase } from '../services/firebase';
-import auth from '@react-native-firebase/auth';
+import { getAuth } from '@react-native-firebase/auth';
 
 interface UserContextType {
   user: User | null;
@@ -60,7 +60,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(true);
       await firebaseService.createUserProfile(userData);
       
-      const currentUser = auth().currentUser;
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
       if (currentUser) {
         const userProfile = await firebaseService.getUserProfile(currentUser.uid);
         setUser(userProfile);
@@ -118,7 +119,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const refreshUserData = async () => {
-    if (!auth().currentUser) return;
+    const auth = getAuth();
+    if (!auth.currentUser) return;
     
     try {
       setLoading(true);

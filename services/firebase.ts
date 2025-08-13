@@ -1,5 +1,5 @@
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, addDoc, query, where, orderBy, onSnapshot } from '@react-native-firebase/firestore';
+import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 
 export interface User {
   uid: string;
@@ -81,15 +81,17 @@ export interface UserCourseEnrollment {
 }
 
 class FirebaseService {
-  private usersCollection = firestore().collection('users');
-  private coursesCollection = firestore().collection('courses');
-  private productsCollection = firestore().collection('products');
-  private cartsCollection = firestore().collection('carts');
-  private purchasesCollection = firestore().collection('purchases');
-  private enrollmentsCollection = firestore().collection('enrollments');
+  private db = getFirestore();
+  private auth = getAuth();
+  private usersCollection = 'users';
+  private coursesCollection = 'courses';
+  private productsCollection = 'products';
+  private cartsCollection = 'carts';
+  private purchasesCollection = 'purchases';
+  private enrollmentsCollection = 'enrollments';
 
   async createUserProfile(user: Partial<User>): Promise<void> {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) throw new Error('No authenticated user');
 
     const userData: User = {
@@ -102,32 +104,34 @@ class FirebaseService {
       updatedAt: new Date(),
     };
 
-    await this.usersCollection.doc(currentUser.uid).set(userData);
+    await setDoc(doc(this.db, this.usersCollection, currentUser.uid), userData);
   }
 
   async getUserProfile(uid?: string): Promise<User | null> {
-    const userId = uid || auth().currentUser?.uid;
+    const userId = uid || this.auth.currentUser?.uid;
     if (!userId) return null;
 
-    const doc = await this.usersCollection.doc(userId).get();
-    return doc.exists ? (doc.data() as User) : null;
+    const docSnap = await getDoc(doc(this.db, this.usersCollection, userId));
+    return docSnap.exists() ? (docSnap.data() as User) : null;
   }
 
   async updateUserProfile(updates: Partial<User>): Promise<void> {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) throw new Error('No authenticated user');
 
-    await this.usersCollection.doc(currentUser.uid).update({
+    await updateDoc(doc(this.db, this.usersCollection, currentUser.uid), {
       ...updates,
       updatedAt: new Date(),
     });
   }
 
   async getCourses(): Promise<Course[]> {
-    const snapshot = await this.coursesCollection
-      .where('isActive', '==', true)
-      .orderBy('createdAt', 'desc')
-      .get();
+    const q = query(
+      collection(this.db, this.coursesCollection),
+      where('isActive', '==', true),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
 
     return snapshot.docs.map(doc => ({
       id: doc.id,
@@ -136,15 +140,17 @@ class FirebaseService {
   }
 
   async getCourse(courseId: string): Promise<Course | null> {
-    const doc = await this.coursesCollection.doc(courseId).get();
-    return doc.exists ? ({ id: doc.id, ...doc.data() } as Course) : null;
+    const docSnap = await getDoc(doc(this.db, this.coursesCollection, courseId));
+    return docSnap.exists() ? ({ id: docSnap.id, ...docSnap.data() } as Course) : null;
   }
 
   async getProducts(): Promise<Product[]> {
-    const snapshot = await this.productsCollection
-      .where('isActive', '==', true)
-      .orderBy('createdAt', 'desc')
-      .get();
+    const q = query(
+      collection(this.db, this.productsCollection),
+      where('isActive', '==', true),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
 
     return snapshot.docs.map(doc => ({
       id: doc.id,
@@ -153,12 +159,12 @@ class FirebaseService {
   }
 
   async getProduct(productId: string): Promise<Product | null> {
-    const doc = await this.productsCollection.doc(productId).get();
-    return doc.exists ? ({ id: doc.id, ...doc.data() } as Product) : null;
+    const docSnap = await getDoc(doc(this.db, this.productsCollection, productId));
+    return docSnap.exists() ? ({ id: docSnap.id, ...docSnap.data() } as Product) : null;
   }
 
   async saveUserCart(cartItems: CartItem[]): Promise<void> {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) throw new Error('No authenticated user');
 
     const total = cartItems.reduce((sum, item) => {
@@ -176,29 +182,29 @@ class FirebaseService {
       updatedAt: new Date(),
     };
 
-    await this.cartsCollection.doc(currentUser.uid).set(cartData);
+    await setDoc(doc(this.db, this.cartsCollection, currentUser.uid), cartData);
   }
 
   async getUserCart(): Promise<CartItem[]> {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) return [];
 
-    const doc = await this.cartsCollection.doc(currentUser.uid).get();
-    if (!doc.exists) return [];
+    const docSnap = await getDoc(doc(this.db, this.cartsCollection, currentUser.uid));
+    if (!docSnap.exists()) return [];
 
-    const cartData = doc.data() as UserCart;
+    const cartData = docSnap.data() as UserCart;
     return cartData.items || [];
   }
 
   async clearUserCart(): Promise<void> {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) throw new Error('No authenticated user');
 
-    await this.cartsCollection.doc(currentUser.uid).delete();
+    await deleteDoc(doc(this.db, this.cartsCollection, currentUser.uid));
   }
 
   async createPurchase(cartItems: CartItem[], paymentMethod?: string): Promise<string> {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) throw new Error('No authenticated user');
 
     const total = cartItems.reduce((sum, item) => {
@@ -216,18 +222,20 @@ class FirebaseService {
       updatedAt: new Date(),
     };
 
-    const docRef = await this.purchasesCollection.add(purchaseData);
+    const docRef = await addDoc(collection(this.db, this.purchasesCollection), purchaseData);
     return docRef.id;
   }
 
   async getUserPurchases(): Promise<UserPurchase[]> {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) return [];
 
-    const snapshot = await this.purchasesCollection
-      .where('uid', '==', currentUser.uid)
-      .orderBy('createdAt', 'desc')
-      .get();
+    const q = query(
+      collection(this.db, this.purchasesCollection),
+      where('uid', '==', currentUser.uid),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
 
     return snapshot.docs.map(doc => ({
       id: doc.id,
@@ -236,14 +244,14 @@ class FirebaseService {
   }
 
   async updatePurchaseStatus(purchaseId: string, status: UserPurchase['status']): Promise<void> {
-    await this.purchasesCollection.doc(purchaseId).update({
+    await updateDoc(doc(this.db, this.purchasesCollection, purchaseId), {
       status,
       updatedAt: new Date(),
     });
   }
 
   async enrollInCourse(courseId: string): Promise<void> {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) throw new Error('No authenticated user');
 
     const enrollmentData: UserCourseEnrollment = {
@@ -256,27 +264,29 @@ class FirebaseService {
     };
 
     const enrollmentId = `${currentUser.uid}_${courseId}`;
-    await this.enrollmentsCollection.doc(enrollmentId).set(enrollmentData);
+    await setDoc(doc(this.db, this.enrollmentsCollection, enrollmentId), enrollmentData);
   }
 
   async getUserEnrollments(): Promise<UserCourseEnrollment[]> {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) return [];
 
-    const snapshot = await this.enrollmentsCollection
-      .where('uid', '==', currentUser.uid)
-      .orderBy('enrolledAt', 'desc')
-      .get();
+    const q = query(
+      collection(this.db, this.enrollmentsCollection),
+      where('uid', '==', currentUser.uid),
+      orderBy('enrolledAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
 
     return snapshot.docs.map(doc => doc.data()) as UserCourseEnrollment[];
   }
 
   async updateCourseProgress(courseId: string, progress: number): Promise<void> {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) throw new Error('No authenticated user');
 
     const enrollmentId = `${currentUser.uid}_${courseId}`;
-    await this.enrollmentsCollection.doc(enrollmentId).update({
+    await updateDoc(doc(this.db, this.enrollmentsCollection, enrollmentId), {
       progress,
       completed: progress >= 100,
       lastAccessedAt: new Date(),
@@ -284,28 +294,28 @@ class FirebaseService {
   }
 
   async isUserEnrolledInCourse(courseId: string): Promise<boolean> {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) return false;
 
     const enrollmentId = `${currentUser.uid}_${courseId}`;
-    const doc = await this.enrollmentsCollection.doc(enrollmentId).get();
-    return doc.exists;
+    const docSnap = await getDoc(doc(this.db, this.enrollmentsCollection, enrollmentId));
+    return docSnap.exists();
   }
 
   onAuthStateChanged(callback: (user: any) => void) {
-    return auth().onAuthStateChanged(callback);
+    return onAuthStateChanged(this.auth, callback);
   }
 
   subscribeToUserCart(callback: (cartItems: CartItem[]) => void) {
-    const currentUser = auth().currentUser;
+    const currentUser = this.auth.currentUser;
     if (!currentUser) {
       callback([]);
       return () => {};
     }
 
-    return this.cartsCollection.doc(currentUser.uid).onSnapshot((doc) => {
-      if (doc.exists) {
-        const cartData = doc.data() as UserCart;
+    return onSnapshot(doc(this.db, this.cartsCollection, currentUser.uid), (docSnap) => {
+      if (docSnap.exists()) {
+        const cartData = docSnap.data() as UserCart;
         callback(cartData.items || []);
       } else {
         callback([]);

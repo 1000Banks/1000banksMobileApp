@@ -1,31 +1,34 @@
 import { Stack } from 'expo-router';
 import { CartProvider } from '@/contexts/CartContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { UserProvider } from '@/contexts/UserContext';
 
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="auth" />
-          <Stack.Screen name="sign-in" />
-          <Stack.Screen name="sign-up" />
-          <Stack.Screen name="edit-profile" />
-          <Stack.Screen name="about" />
-          <Stack.Screen name="services" />
-          <Stack.Screen name="contact" />
-          <Stack.Screen name="faq" />
-          <Stack.Screen name="hiring" />
-          <Stack.Screen name="course-detail" />
-          <Stack.Screen name="checkout" />
-          <Stack.Screen name="courses" />
-          <Stack.Screen name="shop" />
-          <Stack.Screen name="trading" />
-          <Stack.Screen name="account" />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-      </CartProvider>
+      <UserProvider>
+        <CartProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="auth" />
+            <Stack.Screen name="sign-in" />
+            <Stack.Screen name="sign-up" />
+            <Stack.Screen name="edit-profile" />
+            <Stack.Screen name="about" />
+            <Stack.Screen name="services" />
+            <Stack.Screen name="contact" />
+            <Stack.Screen name="faq" />
+            <Stack.Screen name="hiring" />
+            <Stack.Screen name="course-detail" />
+            <Stack.Screen name="checkout" />
+            <Stack.Screen name="courses" />
+            <Stack.Screen name="shop" />
+            <Stack.Screen name="trading" />
+            <Stack.Screen name="account" />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </CartProvider>
+      </UserProvider>
     </AuthProvider>
   );
 }

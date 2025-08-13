@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import firebaseService from '../services/firebase';
-import auth from '@react-native-firebase/auth';
+import { getAuth } from '@react-native-firebase/auth';
 
 export interface CartItem {
   id: string;
@@ -64,7 +64,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const syncCart = async () => {
-    if (!auth().currentUser) return;
+    const auth = getAuth();
+    if (!auth.currentUser) return;
     
     try {
       setLoading(true);
@@ -89,7 +90,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     setCartItems(newCartItems);
     
-    if (auth().currentUser) {
+    const auth = getAuth();
+    if (auth.currentUser) {
       try {
         await firebaseService.saveUserCart(newCartItems);
       } catch (error) {
@@ -102,7 +104,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const newCartItems = cartItems.filter(item => item.id !== id);
     setCartItems(newCartItems);
     
-    if (auth().currentUser) {
+    const auth = getAuth();
+    if (auth.currentUser) {
       try {
         await firebaseService.saveUserCart(newCartItems);
       } catch (error) {
@@ -122,7 +125,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
     setCartItems(newCartItems);
     
-    if (auth().currentUser) {
+    const auth = getAuth();
+    if (auth.currentUser) {
       try {
         await firebaseService.saveUserCart(newCartItems);
       } catch (error) {
@@ -134,7 +138,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const clearCart = async () => {
     setCartItems([]);
     
-    if (auth().currentUser) {
+    const auth = getAuth();
+    if (auth.currentUser) {
       try {
         await firebaseService.clearUserCart();
       } catch (error) {
