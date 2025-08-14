@@ -15,7 +15,7 @@ import BottomTabs from '@/components/BottomTabs';
 const TradingScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <AppHeader title="Trading" showBackButton={false} />
+      <AppHeader showMenuAndCart={true} />
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <View style={styles.iconContainer}>

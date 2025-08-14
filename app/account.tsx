@@ -87,7 +87,7 @@ const AccountScreen = () => {
   if (!loading && !user) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <AppHeader title="Account" showBackButton={false} />
+        <AppHeader showMenuAndCart={true} />
         <View style={styles.signInPrompt}>
           <Ionicons name="person-circle-outline" size={80} color={AppColors.primary} />
           <Text style={styles.signInTitle}>Sign In to Your Account</Text>
@@ -251,7 +251,7 @@ const AccountScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <AppHeader title="Account" showBackButton={false} />
+      <AppHeader showMenuAndCart={true} />
 
       {/* Internal Tab Navigation */}
       <View style={styles.tabNavigation}>

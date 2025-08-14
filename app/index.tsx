@@ -18,13 +18,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SplashScreen from '../components/SplashScreen';
 import BottomTabs from '../components/BottomTabs';
+import AppHeader from '../components/AppHeader';
 import { AppColors } from '../constants/Colors';
 import { useCart } from '../contexts/CartContext';
 import { useResourceLoader } from '../hooks/useResourceLoader';
+import { useSplashScreen } from '../hooks/useSplashScreen';
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [isVideoVisible, setIsVideoVisible] = useState(false);
   const { cartItems, addToCart, getCartCount } = useCart();
@@ -32,21 +33,15 @@ export default function HomeScreen() {
   const videoContainerRef = useRef<View>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const { progress, isLoading, loadingText } = useResourceLoader();
+  const { showSplash, hideSplash } = useSplashScreen();
 
-  // Show splash screen while resources are loading
-  const showSplash = isLoading;
+  // Show splash screen while resources are loading only on first app load
+  const shouldShowSplash = showSplash && isLoading;
 
   const handleGetStarted = () => {
     router.push('/sign-up');
   };
 
-  const handleSignIn = () => {
-    router.push('/sign-in');
-  };
-
-  const handleSignUp = () => {
-    router.push('/sign-up');
-  };
 
   // Handle scroll to check video visibility
   const handleScroll = (event: any) => {
@@ -187,11 +182,11 @@ export default function HomeScreen() {
   );
 
 
-  if (showSplash) {
+  if (shouldShowSplash) {
     return (
       <SplashScreen 
         onAnimationComplete={() => {
-          // This will be called when loading is complete
+          hideSplash();
         }}
         loadingProgress={progress}
         loadingText={loadingText}
@@ -204,71 +199,7 @@ export default function HomeScreen() {
       <StatusBar barStyle="light-content" backgroundColor={AppColors.background.dark} />
       
       {/* Header with Menu */}
-      <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Image 
-            source={require('../assets/images/logo.webp')} 
-            style={{ width: 100, height: 40 }} 
-            resizeMode="contain"/>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.cartButton}
-            onPress={() => router.push('/checkout')}
-          >
-            <Ionicons name="cart-outline" size={24} color={AppColors.text.primary} />
-            {getCartCount() > 0 && (
-              <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{getCartCount()}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.menuButton}
-            onPress={() => setMenuOpen(!menuOpen)}
-          >
-            <Text style={styles.menuIcon}>☰</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Menu Overlay */}
-      {menuOpen && (
-        <View style={styles.menuOverlay}>
-          <View style={styles.menuContent}>
-            <TouchableOpacity style={styles.menuCloseButton} onPress={() => setMenuOpen(false)}>
-              <Text style={styles.menuCloseIcon}>✕</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.menuItems}>
-              <TouchableOpacity style={styles.menuItem} onPress={() => { router.push('/about'); setMenuOpen(false); }}>
-                <Text style={styles.menuItemText}>About Us</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={() => { router.push('/services'); setMenuOpen(false); }}>
-                <Text style={styles.menuItemText}>Services</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={() => { router.push('/faq'); setMenuOpen(false); }}>
-                <Text style={styles.menuItemText}>FAQ</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={() => { router.push('/hiring'); setMenuOpen(false); }}>
-                <Text style={styles.menuItemText}>We're Hiring</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={() => { router.push('/contact'); setMenuOpen(false); }}>
-                <Text style={styles.menuItemText}>Contact Us</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.authButtons}>
-              <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
-                <Text style={styles.signInButtonText}>Sign In</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
-                <Text style={styles.signUpButtonText}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
+      <AppHeader showMenuAndCart={true} />
       <ScrollView 
         ref={scrollViewRef}
         style={styles.scrollContent} 
@@ -288,137 +219,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: AppColors.background.dark,
-  },
-  header: {
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-    backgroundColor: AppColors.background.dark,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  logoText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: AppColors.primary,
-    letterSpacing: -0.5,
-  },
-  logoSubText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: AppColors.text.primary,
-    letterSpacing: 1.5,
-    marginLeft: 5,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cartButton: {
-    padding: 8,
-    marginRight: 8,
-    position: 'relative',
-  },
-  cartBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: AppColors.primary,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  cartBadgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: AppColors.background.dark,
-  },
-  menuButton: {
-    padding: 8,
-  },
-  menuIcon: {
-    fontSize: 24,
-    color: AppColors.text.primary,
-  },
-  menuOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    zIndex: 999,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuContent: {
-    backgroundColor: AppColors.background.card,
-    borderRadius: 20,
-    padding: 32,
-    width: width * 0.85,
-    maxHeight: '80%',
-  },
-  menuCloseButton: {
-    alignSelf: 'flex-end',
-    padding: 8,
-    marginBottom: 20,
-  },
-  menuCloseIcon: {
-    fontSize: 24,
-    color: AppColors.text.primary,
-  },
-  menuItems: {
-    marginBottom: 32,
-  },
-  menuItem: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.background.dark,
-  },
-  menuItemText: {
-    fontSize: 18,
-    color: AppColors.text.primary,
-    fontWeight: '500',
-  },
-  authButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  signInButton: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: AppColors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  signInButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: AppColors.primary,
-  },
-  signUpButton: {
-    flex: 1,
-    backgroundColor: AppColors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  signUpButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: AppColors.background.dark,
   },
   scrollContent: {
     flex: 1,

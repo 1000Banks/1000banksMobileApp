@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a React Native application built with Expo (v53) called "1000Banks" - a fintech mobile application for banking and financial services. The app uses:
+This is a React Native application built with Expo (v53) called "1000Banks" - a fintech educational and e-commerce platform. The app uses:
 
 - **React Native 0.79.5** with **React 19.0.0**
 - **Expo Router** for file-based routing
 - **TypeScript** with strict mode enabled
-- **Firebase Authentication** for user management
-- **React Native Firebase** for backend services
+- **Firebase Authentication** and **Firestore** for backend services
+- **React Native Firebase** modular SDK (v22.4.0)
 
 ## Development Commands
 
@@ -42,9 +42,16 @@ This is a React Native application built with Expo (v53) called "1000Banks" - a 
 - `android/` - Android-specific configuration and native code
 
 ### Firebase Integration
-- Authentication configured with email/password providers
-- Google Services files present for both iOS (`GoogleService-Info.plist`) and Android (`google-services.json`)
-- Uses `@react-native-firebase/app` and `@react-native-firebase/auth`
+- **Authentication**: Email/password and Google Sign-In providers
+- **Firestore Database**: Real-time data sync for cart, user profiles, courses, and purchases
+- **Service Layer**: Complete Firebase service abstraction in `services/firebase.ts`
+- **Context Providers**: `AuthContext`, `UserContext`, and `CartContext` for state management
+- **Modular SDK**: Uses new Firebase modular API (getFirestore, collection, doc, etc.)
+
+**Required Configuration**:
+- Replace `YOUR_WEB_CLIENT_ID` in `/app/auth.tsx` with actual Firebase Web Client ID
+- Enable Firestore Database in Firebase Console
+- Set security rules as documented in FIREBASE_SETUP.md
 
 ### Design System
 Based on the dark-themed fintech design inspiration in `mobile app design.webp`:
@@ -86,6 +93,21 @@ Based on the dark-themed fintech design inspiration in `mobile app design.webp`:
 ### Testing
 No dedicated test setup configured - uses default Expo/React Native testing capabilities.
 
+## Firebase Database Architecture
+
+### Collections Structure
+- **users**: User profiles with auth provider info
+- **courses**: Course catalog with curriculum and pricing
+- **products**: E-commerce product listings
+- **carts**: User shopping carts (real-time sync)
+- **purchases**: Transaction history
+- **enrollments**: Course enrollment and progress tracking
+
+### Real-time Features
+- Cart syncs across devices when user is authenticated
+- User profile updates reflect immediately
+- Course enrollments tracked with progress
+
 ## Important Design Guidelines
 
 When working with this codebase, ensure all new screens and components follow the established design system:
@@ -108,18 +130,32 @@ The app combines fintech education with e-commerce functionality:
 - **Investment Programs**: Information about 1000Streams and other investment opportunities
 - **Educational Content**: Trading signals, coaching programs, and financial planning services
 
-### State Management
-- **CartContext**: Global shopping cart state using React Context API
-  - Manages both course enrollments and product purchases
-  - Handles cart operations (add, remove, update quantity, checkout)
+### State Management Architecture
+
+**Provider Hierarchy** (in `app/_layout.tsx`):
+```
+AuthProvider
+  └── UserProvider
+      └── CartProvider
+          └── App Content
+```
+
+- **AuthContext**: Firebase authentication state and methods
+- **UserContext**: User profile, enrollments, purchases, and Firestore sync
+- **CartContext**: Shopping cart with Firebase backend integration
+  - Automatic cart persistence for authenticated users
+  - Real-time cart sync across devices
   - Supports both 'product' and 'course' item types
-  - Provides cart total calculation and item count
   
 ### Navigation Architecture
 - **File-based routing** with Expo Router
-- **Bottom tab navigation** within main screen (Home, Courses, Shop, Trading, Settings)
-- **Modal/Stack navigation** for detail screens (Course Detail, Checkout, About, etc.)
-- **Menu overlay** for additional navigation options
+- **Bottom tab navigation** (Home, Courses, Shop, Trading, Account)
+- **AppHeader Component**: Consistent header across all tabs with:
+  - Hamburger menu with navigation options
+  - User profile icon (shows initials when logged in)
+  - Shopping cart with badge count
+  - Dynamic auth state handling
+- **Splash Screen**: Only shows on initial app load (uses `useSplashScreen` hook)
 
 ### Screen Organization
 **Main Screens:**
@@ -140,9 +176,10 @@ The app combines fintech education with e-commerce functionality:
 - `+not-found.tsx` - 404/error page
 
 ### Data Architecture
-- **Static Data**: Course listings, FAQ items, job postings defined in respective screen files
-- **Dynamic Data**: Cart state, user authentication, form submissions
-- **No Backend Integration**: Currently uses mock data and alert-based form submissions
+- **Firebase Backend**: Full Firestore integration for dynamic data
+- **Static Data**: Course catalog and product listings (can be migrated to Firestore)
+- **Real-time Sync**: Cart and user data sync across devices
+- **Offline Support**: Firebase handles offline caching automatically
 
 ### Component Patterns
 - **Reusable UI Components**: Consistent styling and behavior across screens  
@@ -152,8 +189,29 @@ The app combines fintech education with e-commerce functionality:
 
 ### Key Development Patterns
 - Use `useRouter()` from expo-router for navigation
+- Access authentication via `useAuth()` hook
+- Access user data via `useUser()` hook  
 - Access cart functionality via `useCart()` hook
 - Follow AppColors constants for consistent theming
+- Use AppHeader component with `showMenuAndCart={true}` for main screens
 - Implement smooth animations using React Native's Animated API
 - Use SafeAreaView for proper screen boundaries
 - Handle form validation with Alert feedback
+
+## Common Development Tasks
+
+### Running on Android with Firebase
+If you encounter Firebase configuration issues:
+1. Ensure `google-services.json` is in the `android/app/` directory
+2. Clean and rebuild: `cd android && ./gradlew clean && cd .. && npm run android`
+
+### Running on iOS with Firebase  
+1. Ensure `GoogleService-Info.plist` is linked in Xcode
+2. Run `cd ios && pod install && cd ..`
+3. Then `npm run ios`
+
+### Debugging Firebase Issues
+- Check Firebase Console for proper service enablement
+- Verify authentication providers are enabled
+- Ensure Firestore security rules match the app's data structure
+- Use React Native Debugger to inspect context values
