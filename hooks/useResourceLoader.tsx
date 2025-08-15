@@ -10,11 +10,13 @@ interface ResourceLoaderState {
   error?: string;
 }
 
+let hasLoadedResources = false;
+
 export const useResourceLoader = () => {
   const [state, setState] = useState<ResourceLoaderState>({
-    progress: 0,
-    isLoading: true,
-    loadingText: 'Initializing...',
+    progress: hasLoadedResources ? 100 : 0,
+    isLoading: !hasLoadedResources,
+    loadingText: hasLoadedResources ? 'Welcome to 1000Banks!' : 'Initializing...',
   });
 
   const updateProgress = useCallback((progress: number, text: string) => {
@@ -65,6 +67,7 @@ export const useResourceLoader = () => {
       await new Promise(resolve => setTimeout(resolve, 300));
       
       updateProgress(100, 'Welcome to 1000Banks!');
+      hasLoadedResources = true;
 
     } catch (error) {
       console.error('Resource loading error:', error);
@@ -73,11 +76,14 @@ export const useResourceLoader = () => {
         error: 'Failed to load resources',
         isLoading: false,
       }));
+      hasLoadedResources = true; // Mark as loaded even on error to prevent re-loading
     }
   }, [updateProgress]);
 
   useEffect(() => {
-    loadResources();
+    if (!hasLoadedResources) {
+      loadResources();
+    }
   }, [loadResources]);
 
   return state;

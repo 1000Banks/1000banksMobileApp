@@ -9,6 +9,7 @@ import {
   FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { AppColors } from '@/constants/Colors';
 import { useCart } from '@/contexts/CartContext';
 import AppHeader from '@/components/AppHeader';
@@ -46,25 +47,40 @@ const ShopScreen = () => {
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.shopItemCard}>
+            <TouchableOpacity 
+              style={styles.shopItemCard}
+              onPress={() => router.push({
+                pathname: '/product-detail',
+                params: {
+                  id: item.id,
+                  name: item.name,
+                  price: item.price,
+                  image: item.image,
+                  description: item.description,
+                }
+              })}
+            >
               <Text style={styles.shopItemImage}>{item.image}</Text>
               <Text style={styles.shopItemName}>{item.name}</Text>
               <Text style={styles.shopItemDescription}>{item.description}</Text>
               <Text style={styles.shopItemPrice}>{item.price}</Text>
               <TouchableOpacity 
                 style={styles.addToCartButton}
-                onPress={() => addToCart({
-                  id: item.id,
-                  name: item.name,
-                  price: item.price,
-                  type: 'product',
-                  image: item.image,
-                  description: item.description
-                })}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  addToCart({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    type: 'product',
+                    image: item.image,
+                    description: item.description
+                  });
+                }}
               >
                 <Text style={styles.addToCartText}>Add to Cart</Text>
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           )}
           contentContainerStyle={styles.shopGrid}
           columnWrapperStyle={styles.shopRow}

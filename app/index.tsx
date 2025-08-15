@@ -169,11 +169,23 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.merchCard}>
+            <TouchableOpacity 
+              style={styles.merchCard}
+              onPress={() => router.push({
+                pathname: '/product-detail',
+                params: {
+                  id: item.id,
+                  name: item.name,
+                  price: item.price,
+                  image: item.image,
+                  description: item.description,
+                }
+              })}
+            >
               <Text style={styles.merchImage}>{item.image}</Text>
               <Text style={styles.merchName}>{item.name}</Text>
               <Text style={styles.merchPrice}>{item.price}</Text>
-            </View>
+            </TouchableOpacity>
           )}
           contentContainerStyle={styles.merchList}
         />
