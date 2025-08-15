@@ -331,19 +331,44 @@ class FirebaseService {
   // Admin methods
   async isAdmin(): Promise<boolean> {
     const currentUser = this.auth.currentUser;
-    if (!currentUser) return false;
+    console.log('isAdmin check - currentUser:', currentUser?.email);
     
-    // First check if email is in admin list
+    if (!currentUser) {
+      console.log('isAdmin check - no current user');
+      return false;
+    }
+    
+    // SECURITY: Both email AND Firestore profile must confirm admin status
     const isAdminEmail = await this.checkAdminEmail(currentUser.email || '');
-    if (isAdminEmail) return true;
+    console.log('isAdmin check - isAdminEmail:', isAdminEmail);
     
-    // Then check user profile if it exists
+    // If email is not in admin list, immediately return false
+    if (!isAdminEmail) {
+      console.log('isAdmin check - email not in admin list');
+      return false;
+    }
+    
+    // Email is admin, now check Firestore profile
     try {
       const userProfile = await this.getUserProfile();
-      return userProfile?.isAdmin || false;
+      console.log('isAdmin check - userProfile:', userProfile);
+      
+      if (!userProfile) {
+        console.log('isAdmin check - no user profile found');
+        return false;
+      }
+      
+      const isAdminInProfile = userProfile.isAdmin === true;
+      console.log('isAdmin check - isAdmin in profile:', isAdminInProfile);
+      
+      // BOTH email and profile must confirm admin status
+      const result = isAdminEmail && isAdminInProfile;
+      console.log('isAdmin check - final result (email AND profile):', result);
+      return result;
+      
     } catch (error) {
-      // If users collection doesn't exist or user profile doesn't exist, check email
-      return isAdminEmail;
+      console.log('isAdmin check - error getting profile:', error);
+      return false; // If we can't verify profile, deny access
     }
   }
 
@@ -355,8 +380,16 @@ class FirebaseService {
 
   // Product management methods
   async createProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    console.log('createProduct called');
+    
+    // SECURITY: Proper admin verification required
     const isAdmin = await this.isAdmin();
-    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+    console.log('createProduct - isAdmin:', isAdmin);
+    
+    if (!isAdmin) {
+      console.log('createProduct - access denied');
+      throw new Error('Unauthorized: Admin access required');
+    }
 
     const productData = {
       ...product,
@@ -364,7 +397,9 @@ class FirebaseService {
       updatedAt: new Date(),
     };
 
+    console.log('createProduct - about to create product:', productData);
     const docRef = await addDoc(collection(this.db, this.productsCollection), productData);
+    console.log('createProduct - product created with ID:', docRef.id);
     return docRef.id;
   }
 
@@ -398,8 +433,16 @@ class FirebaseService {
 
   // Course management methods
   async createCourse(course: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    console.log('createCourse called');
+    
+    // SECURITY: Proper admin verification required
     const isAdmin = await this.isAdmin();
-    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+    console.log('createCourse - isAdmin:', isAdmin);
+    
+    if (!isAdmin) {
+      console.log('createCourse - access denied');
+      throw new Error('Unauthorized: Admin access required');
+    }
 
     const courseData = {
       ...course,
@@ -407,7 +450,9 @@ class FirebaseService {
       updatedAt: new Date(),
     };
 
+    console.log('createCourse - about to create course:', courseData);
     const docRef = await addDoc(collection(this.db, this.coursesCollection), courseData);
+    console.log('createCourse - course created with ID:', docRef.id);
     return docRef.id;
   }
 
