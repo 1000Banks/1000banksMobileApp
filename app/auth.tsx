@@ -50,17 +50,18 @@ export default function AuthScreen() {
       const userCredential = await auth().signInWithEmailAndPassword(email, password);
       console.log('User signed in!');
       
+      // Check if this is an admin email first
+      const isAdminEmail = await firebaseService.checkAdminEmail(email);
+      
       // Ensure user profile exists
       const userProfile = await firebaseService.getUserProfile();
       if (!userProfile) {
         await firebaseService.createUserProfile({
           email: email,
           provider: 'email',
+          isAdmin: isAdminEmail, // Set admin flag if admin email
         });
       }
-      
-      // Check if this is an admin email
-      const isAdminEmail = await firebaseService.checkAdminEmail(email);
       
       if (isAdminEmail) {
         // Show dialog to choose between admin and normal account
@@ -70,7 +71,9 @@ export default function AuthScreen() {
           [
             {
               text: 'Normal Account',
-              onPress: () => {
+              onPress: async () => {
+                // Ensure admin flag is set but go to normal app
+                await firebaseService.updateUserProfile({ isAdmin: true });
                 router.replace('/');
               }
             },

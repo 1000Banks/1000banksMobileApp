@@ -28,9 +28,25 @@ const AdminDashboard = () => {
   }, []);
 
   const checkAdminAccess = async () => {
-    const isAdmin = await firebaseService.isAdmin();
-    if (!isAdmin) {
-      Alert.alert('Access Denied', 'You do not have admin access');
+    try {
+      // Ensure user profile exists
+      const userProfile = await firebaseService.getUserProfile();
+      if (!userProfile) {
+        // Create user profile if it doesn't exist
+        await firebaseService.createUserProfile({
+          provider: 'email',
+          isAdmin: true, // Set admin flag for admin users
+        });
+      }
+      
+      const isAdmin = await firebaseService.isAdmin();
+      if (!isAdmin) {
+        Alert.alert('Access Denied', 'You do not have admin access');
+        router.replace('/');
+      }
+    } catch (error) {
+      console.error('Error checking admin access:', error);
+      Alert.alert('Error', 'Failed to verify admin access');
       router.replace('/');
     }
   };

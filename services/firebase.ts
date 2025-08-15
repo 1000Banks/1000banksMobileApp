@@ -333,8 +333,18 @@ class FirebaseService {
     const currentUser = this.auth.currentUser;
     if (!currentUser) return false;
     
-    const userProfile = await this.getUserProfile();
-    return userProfile?.isAdmin || false;
+    // First check if email is in admin list
+    const isAdminEmail = await this.checkAdminEmail(currentUser.email || '');
+    if (isAdminEmail) return true;
+    
+    // Then check user profile if it exists
+    try {
+      const userProfile = await this.getUserProfile();
+      return userProfile?.isAdmin || false;
+    } catch (error) {
+      // If users collection doesn't exist or user profile doesn't exist, check email
+      return isAdminEmail;
+    }
   }
 
   async checkAdminEmail(email: string): Promise<boolean> {
