@@ -3,6 +3,8 @@ import auth from '@react-native-firebase/auth';
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppColors } from '../constants/Colors';
+import firebaseService from '../services/firebase';
+import { router } from 'expo-router';
 
 export default function AuthScreen() {
   const [email, setEmail] = useState('');
@@ -45,9 +47,48 @@ export default function AuthScreen() {
 
     setLoading(true);
     try {
-      await auth().signInWithEmailAndPassword(email, password);
+      const userCredential = await auth().signInWithEmailAndPassword(email, password);
       console.log('User signed in!');
-      Alert.alert('Success', 'Signed in successfully!');
+      
+      // Ensure user profile exists
+      const userProfile = await firebaseService.getUserProfile();
+      if (!userProfile) {
+        await firebaseService.createUserProfile({
+          email: email,
+          provider: 'email',
+        });
+      }
+      
+      // Check if this is an admin email
+      const isAdminEmail = await firebaseService.checkAdminEmail(email);
+      
+      if (isAdminEmail) {
+        // Show dialog to choose between admin and normal account
+        Alert.alert(
+          'Admin Account Detected',
+          'Would you like to sign in as an administrator?',
+          [
+            {
+              text: 'Normal Account',
+              onPress: () => {
+                router.replace('/');
+              }
+            },
+            {
+              text: 'Admin Account',
+              onPress: async () => {
+                // Set admin flag in user profile
+                await firebaseService.updateUserProfile({ isAdmin: true });
+                router.replace('/admin-dashboard');
+              },
+              style: 'default'
+            }
+          ],
+          { cancelable: false }
+        );
+      } else {
+        router.replace('/');
+      }
     } catch (error: any) {
       console.error('Sign in error:', error);
       let message = 'Failed to sign in';

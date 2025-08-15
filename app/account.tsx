@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   ScrollView,
@@ -15,6 +15,7 @@ import BottomTabs from '@/components/BottomTabs';
 import AppHeader from '@/components/AppHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
+import firebaseService from '@/services/firebase';
 
 interface Course {
   id: string;
@@ -80,8 +81,21 @@ const mockOrders: Order[] = [
 
 const AccountScreen = () => {
   const [activeTab, setActiveTab] = useState<'learnings' | 'orders' | 'profile'>('learnings');
+  const [isAdmin, setIsAdmin] = useState(false);
   const { user, signOut, loading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    checkAdminStatus();
+  }, [user]);
+
+  const checkAdminStatus = async () => {
+    if (user?.email) {
+      const adminEmail = await firebaseService.checkAdminEmail(user.email);
+      const userProfile = await firebaseService.getUserProfile();
+      setIsAdmin(adminEmail || userProfile?.isAdmin || false);
+    }
+  };
 
   // If user is not authenticated, show sign-in prompt
   if (!loading && !user) {
@@ -237,6 +251,17 @@ const AccountScreen = () => {
           <Text style={styles.settingText}>Help & Support</Text>
           <Ionicons name="chevron-forward" size={20} color={AppColors.text.secondary} />
         </TouchableOpacity>
+
+        {isAdmin && (
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => router.push('/admin-dashboard')}
+          >
+            <Ionicons name="shield-checkmark" size={24} color={AppColors.primary} />
+            <Text style={styles.settingText}>Admin Dashboard</Text>
+            <Ionicons name="chevron-forward" size={20} color={AppColors.text.secondary} />
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity 
           style={[styles.settingItem, styles.logoutItem]}

@@ -7,6 +7,7 @@ export interface User {
   displayName?: string;
   photoURL?: string;
   provider: 'email' | 'google';
+  isAdmin?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,10 +34,14 @@ export interface Product {
   id: string;
   name: string;
   description: string;
+  fullDescription?: string;
   price: string;
   image: string;
+  imageUrl?: string;
   category: string;
   stock: number;
+  features?: string[];
+  specifications?: Record<string, string>;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -321,6 +326,107 @@ class FirebaseService {
         callback([]);
       }
     });
+  }
+
+  // Admin methods
+  async isAdmin(): Promise<boolean> {
+    const currentUser = this.auth.currentUser;
+    if (!currentUser) return false;
+    
+    const userProfile = await this.getUserProfile();
+    return userProfile?.isAdmin || false;
+  }
+
+  async checkAdminEmail(email: string): Promise<boolean> {
+    // Define admin emails here or fetch from a secure config
+    const adminEmails = ['admin@1000banks.com']; // Replace with actual admin email
+    return adminEmails.includes(email.toLowerCase());
+  }
+
+  // Product management methods
+  async createProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    const productData = {
+      ...product,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const docRef = await addDoc(collection(this.db, this.productsCollection), productData);
+    return docRef.id;
+  }
+
+  async updateProduct(productId: string, updates: Partial<Product>): Promise<void> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    await updateDoc(doc(this.db, this.productsCollection, productId), {
+      ...updates,
+      updatedAt: new Date(),
+    });
+  }
+
+  async deleteProduct(productId: string): Promise<void> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    await deleteDoc(doc(this.db, this.productsCollection, productId));
+  }
+
+  async getAllProducts(): Promise<Product[]> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    const snapshot = await getDocs(collection(this.db, this.productsCollection));
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Product[];
+  }
+
+  // Course management methods
+  async createCourse(course: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    const courseData = {
+      ...course,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const docRef = await addDoc(collection(this.db, this.coursesCollection), courseData);
+    return docRef.id;
+  }
+
+  async updateCourse(courseId: string, updates: Partial<Course>): Promise<void> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    await updateDoc(doc(this.db, this.coursesCollection, courseId), {
+      ...updates,
+      updatedAt: new Date(),
+    });
+  }
+
+  async deleteCourse(courseId: string): Promise<void> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    await deleteDoc(doc(this.db, this.coursesCollection, courseId));
+  }
+
+  async getAllCourses(): Promise<Course[]> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    const snapshot = await getDocs(collection(this.db, this.coursesCollection));
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Course[];
   }
 }
 

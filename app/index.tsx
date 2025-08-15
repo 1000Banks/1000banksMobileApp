@@ -23,11 +23,13 @@ import { AppColors } from '../constants/Colors';
 import { useCart } from '../contexts/CartContext';
 import { useResourceLoader } from '../hooks/useResourceLoader';
 import { useSplashScreen } from '../hooks/useSplashScreen';
+import firebaseService, { Product } from '../services/firebase';
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [videoError, setVideoError] = useState(false);
   const [isVideoVisible, setIsVideoVisible] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
   const { cartItems, addToCart, getCartCount } = useCart();
   const videoRef = useRef<Video>(null);
   const videoContainerRef = useRef<View>(null);
@@ -37,6 +39,26 @@ export default function HomeScreen() {
 
   // Show splash screen while resources are loading only on first app load
   const shouldShowSplash = showSplash && isLoading;
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      const fetchedProducts = await firebaseService.getProducts();
+      setProducts(fetchedProducts.slice(0, 8)); // Show only first 8 products
+    } catch (error) {
+      console.error('Error loading products:', error);
+      // Use fallback data
+      setProducts([
+        { id: '1', name: '1000Banks Hoodie', price: '$49.99', image: '👕', description: 'Premium quality hoodie with 1000Banks logo', category: 'Apparel', stock: 10, isActive: true, createdAt: new Date(), updatedAt: new Date() },
+        { id: '2', name: 'Financial Freedom Mug', price: '$19.99', image: '☕', description: 'Start your day with motivation', category: 'Accessories', stock: 20, isActive: true, createdAt: new Date(), updatedAt: new Date() },
+        { id: '3', name: 'Entrepreneur Cap', price: '$24.99', image: '🧢', description: 'Stylish cap for the modern entrepreneur', category: 'Apparel', stock: 15, isActive: true, createdAt: new Date(), updatedAt: new Date() },
+        { id: '4', name: 'Success Journal', price: '$29.99', image: '📔', description: 'Track your journey to financial freedom', category: 'Books', stock: 25, isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      ]);
+    }
+  };
 
   const handleGetStarted = () => {
     router.push('/sign-up');
@@ -70,17 +92,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Sample merch data
-  const merchData = [
-    { id: '1', name: '1000Banks Hoodie', price: '$49.99', image: '👕', description: 'Premium quality hoodie with 1000Banks logo' },
-    { id: '2', name: 'Financial Freedom Mug', price: '$19.99', image: '☕', description: 'Start your day with motivation' },
-    { id: '3', name: 'Entrepreneur Cap', price: '$24.99', image: '🧢', description: 'Stylish cap for the modern entrepreneur' },
-    { id: '4', name: 'Success Journal', price: '$29.99', image: '📔', description: 'Track your journey to financial freedom' },
-    { id: '5', name: 'Investment Tee', price: '$24.99', image: '👔', description: 'Comfortable cotton tee with inspiring quotes' },
-    { id: '6', name: 'Wealth Mindset Book', price: '$34.99', image: '📚', description: 'Essential reading for financial success' },
-    { id: '7', name: 'Money Tracker Planner', price: '$39.99', image: '📅', description: 'Organize your finances effectively' },
-    { id: '8', name: 'Motivational Water Bottle', price: '$22.99', image: '💧', description: 'Stay hydrated, stay motivated' },
-  ];
 
   const renderHomeContent = () => (
     <>
@@ -164,7 +175,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={merchData.slice(0, 4)}
+          data={products.slice(0, 4)}
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id}

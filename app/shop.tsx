@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   ScrollView,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Dimensions,
   FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -14,23 +15,36 @@ import { AppColors } from '@/constants/Colors';
 import { useCart } from '@/contexts/CartContext';
 import AppHeader from '@/components/AppHeader';
 import BottomTabs from '@/components/BottomTabs';
+import firebaseService, { Product } from '@/services/firebase';
 
 const { width } = Dimensions.get('window');
 
 const ShopScreen = () => {
   const { addToCart } = useCart();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sample merch data
-  const merchData = [
-    { id: '1', name: '1000Banks Hoodie', price: '$49.99', image: '👕', description: 'Premium quality hoodie with 1000Banks logo' },
-    { id: '2', name: 'Financial Freedom Mug', price: '$19.99', image: '☕', description: 'Start your day with motivation' },
-    { id: '3', name: 'Entrepreneur Cap', price: '$24.99', image: '🧢', description: 'Stylish cap for the modern entrepreneur' },
-    { id: '4', name: 'Success Journal', price: '$29.99', image: '📔', description: 'Track your journey to financial freedom' },
-    { id: '5', name: 'Investment Tee', price: '$24.99', image: '👔', description: 'Comfortable cotton tee with inspiring quotes' },
-    { id: '6', name: 'Wealth Mindset Book', price: '$34.99', image: '📚', description: 'Essential reading for financial success' },
-    { id: '7', name: 'Money Tracker Planner', price: '$39.99', image: '📅', description: 'Organize your finances effectively' },
-    { id: '8', name: 'Motivational Water Bottle', price: '$22.99', image: '💧', description: 'Stay hydrated, stay motivated' },
-  ];
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      const fetchedProducts = await firebaseService.getProducts();
+      setProducts(fetchedProducts);
+    } catch (error) {
+      console.error('Error loading products:', error);
+      // Fallback to sample data if Firebase fails
+      setProducts([
+        { id: '1', name: '1000Banks Hoodie', price: '$49.99', image: '👕', description: 'Premium quality hoodie with 1000Banks logo', category: 'Apparel', stock: 10, isActive: true, createdAt: new Date(), updatedAt: new Date() },
+        { id: '2', name: 'Financial Freedom Mug', price: '$19.99', image: '☕', description: 'Start your day with motivation', category: 'Accessories', stock: 20, isActive: true, createdAt: new Date(), updatedAt: new Date() },
+        { id: '3', name: 'Entrepreneur Cap', price: '$24.99', image: '🧢', description: 'Stylish cap for the modern entrepreneur', category: 'Apparel', stock: 15, isActive: true, createdAt: new Date(), updatedAt: new Date() },
+        { id: '4', name: 'Success Journal', price: '$29.99', image: '📔', description: 'Track your journey to financial freedom', category: 'Books', stock: 25, isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -41,8 +55,14 @@ const ShopScreen = () => {
           <Text style={styles.shopSubtitle}>Premium quality items to support your journey</Text>
         </View>
         
-        <FlatList
-          data={merchData}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={AppColors.primary} />
+            <Text style={styles.loadingText}>Loading products...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={products}
           numColumns={2}
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
@@ -57,6 +77,9 @@ const ShopScreen = () => {
                   price: item.price,
                   image: item.image,
                   description: item.description,
+                  fullDescription: item.fullDescription || '',
+                  features: JSON.stringify(item.features || []),
+                  specifications: JSON.stringify(item.specifications || {}),
                 }
               })}
             >
@@ -82,10 +105,11 @@ const ShopScreen = () => {
               </TouchableOpacity>
             </TouchableOpacity>
           )}
-          contentContainerStyle={styles.shopGrid}
-          columnWrapperStyle={styles.shopRow}
-          scrollEnabled={false}
-        />
+            contentContainerStyle={styles.shopGrid}
+            columnWrapperStyle={styles.shopRow}
+            scrollEnabled={false}
+          />
+        )}
       </ScrollView>
       <BottomTabs />
     </SafeAreaView>
@@ -167,6 +191,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: AppColors.background.dark,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: AppColors.text.secondary,
   },
 });
 

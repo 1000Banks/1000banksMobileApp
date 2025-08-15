@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -15,25 +16,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/contexts/CartContext';
 import BottomTabs from '@/components/BottomTabs';
 import AppHeader from '@/components/AppHeader';
+import firebaseService, { Course } from '@/services/firebase';
 
 const { width } = Dimensions.get('window');
 
-export interface Course {
-  id: string;
-  title: string;
-  instructor: string;
-  price: string;
-  duration: string;
-  level: string;
-  rating: number;
-  students: number;
-  description: string;
-  image: string;
-  modules: string[];
-  benefits: string[];
-}
-
-export const coursesData: Course[] = [
+// Fallback data
+const fallbackCoursesData: Course[] = [
   {
     id: 'c1',
     title: 'Financial Freedom Fundamentals',
@@ -217,6 +205,33 @@ interface CoursesScreenProps {
 const CoursesScreen: React.FC<CoursesScreenProps> = ({ embedded = false }) => {
   const router = useRouter();
   const { addToCart } = useCart();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  const loadCourses = async () => {
+    try {
+      const fetchedCourses = await firebaseService.getCourses();
+      setCourses(fetchedCourses);
+    } catch (error) {
+      console.error('Error loading courses:', error);
+      // Use fallback data if Firebase fails
+      setCourses(fallbackCoursesData.map(course => ({
+        ...course,
+        studentsCount: course.students || 0,
+        category: 'Finance',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        curriculum: course.modules || [],
+      })));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -254,8 +269,14 @@ const CoursesScreen: React.FC<CoursesScreenProps> = ({ embedded = false }) => {
         </Text>
       </View>
 
-      <View style={styles.coursesGrid}>
-        {coursesData.map((course) => (
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={AppColors.primary} />
+          <Text style={styles.loadingText}>Loading courses...</Text>
+        </View>
+      ) : (
+        <View style={styles.coursesGrid}>
+          {courses.map((course) => (
           <TouchableOpacity
             key={course.id}
             style={styles.courseCard}
@@ -284,7 +305,7 @@ const CoursesScreen: React.FC<CoursesScreenProps> = ({ embedded = false }) => {
                 </View>
                 <View style={styles.statItem}>
                   <Ionicons name="people" size={16} color={AppColors.text.secondary} />
-                  <Text style={styles.statText}>{course.students}</Text>
+                  <Text style={styles.statText}>{course.studentsCount || course.students || 0}</Text>
                 </View>
               </View>
               
@@ -304,6 +325,7 @@ const CoursesScreen: React.FC<CoursesScreenProps> = ({ embedded = false }) => {
           </TouchableOpacity>
         ))}
       </View>
+      )}
 
       <View style={styles.ctaSection}>
         <Text style={styles.ctaTitle}>Not sure which course to choose?</Text>
@@ -481,6 +503,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: AppColors.primary,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: AppColors.text.secondary,
   },
 });
 
