@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,24 +6,84 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/contexts/CartContext';
-import { coursesData } from './courses';
+import firebaseService, { Course } from '@/services/firebase';
+import { fallbackCoursesData } from './courses';
 
 const CourseDetailScreen = () => {
   const { courseId } = useLocalSearchParams();
   const router = useRouter();
   const { addToCart } = useCart();
+  const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const course = coursesData.find(c => c.id === courseId);
+  useEffect(() => {
+    loadCourse();
+  }, [courseId]);
+
+  const loadCourse = async () => {
+    try {
+      // First try to get from Firebase
+      const firebaseCourse = await firebaseService.getCourse(courseId as string);
+      if (firebaseCourse) {
+        setCourse(firebaseCourse);
+      } else {
+        // Fallback to static data
+        const fallbackCourse = fallbackCoursesData.find(c => c.id === courseId);
+        if (fallbackCourse) {
+          // Convert fallback course to Firebase format
+          setCourse({
+            ...fallbackCourse,
+            studentsCount: fallbackCourse.students || 0,
+            category: 'Finance',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            curriculum: fallbackCourse.modules || [],
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading course:', error);
+      // Try fallback data
+      const fallbackCourse = fallbackCoursesData.find(c => c.id === courseId);
+      if (fallbackCourse) {
+        setCourse({
+          ...fallbackCourse,
+          studentsCount: fallbackCourse.students || 0,
+          category: 'Finance',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          curriculum: fallbackCourse.modules || [],
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={AppColors.primary} />
+        <Text style={styles.loadingText}>Loading course...</Text>
+      </View>
+    );
+  }
 
   if (!course) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, styles.centerContent]}>
         <Text style={styles.errorText}>Course not found</Text>
+        <TouchableOpacity style={styles.backToCoursesButton} onPress={() => router.back()}>
+          <Text style={styles.backToCoursesText}>Back to Courses</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -93,7 +153,7 @@ const CourseDetailScreen = () => {
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Ionicons name="people" size={20} color={AppColors.text.secondary} />
-              <Text style={styles.statText}>{course.students} students</Text>
+              <Text style={styles.statText}>{course.studentsCount || course.students || 0} students</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -126,29 +186,33 @@ const CourseDetailScreen = () => {
         </View>
 
         {/* Course Modules */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Course Curriculum</Text>
-          {course.modules.map((module, index) => (
-            <View key={index} style={styles.moduleItem}>
-              <View style={styles.moduleNumber}>
-                <Text style={styles.moduleNumberText}>{index + 1}</Text>
+        {(course.curriculum || course.modules) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Course Curriculum</Text>
+            {(course.curriculum || course.modules || []).map((module, index) => (
+              <View key={index} style={styles.moduleItem}>
+                <View style={styles.moduleNumber}>
+                  <Text style={styles.moduleNumberText}>{index + 1}</Text>
+                </View>
+                <Text style={styles.moduleText}>{module}</Text>
+                <Ionicons name="lock-closed" size={16} color={AppColors.text.secondary} />
               </View>
-              <Text style={styles.moduleText}>{module}</Text>
-              <Ionicons name="lock-closed" size={16} color={AppColors.text.secondary} />
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        )}
 
         {/* Benefits */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>What You'll Get</Text>
-          {course.benefits.map((benefit, index) => (
-            <View key={index} style={styles.benefitItem}>
-              <Ionicons name="checkmark-circle" size={20} color={AppColors.primary} />
-              <Text style={styles.benefitText}>{benefit}</Text>
-            </View>
-          ))}
-        </View>
+        {course.benefits && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>What You'll Get</Text>
+            {course.benefits.map((benefit, index) => (
+              <View key={index} style={styles.benefitItem}>
+                <Ionicons name="checkmark-circle" size={20} color={AppColors.primary} />
+                <Text style={styles.benefitText}>{benefit}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Instructor Section */}
         <View style={styles.section}>
@@ -414,7 +478,28 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: AppColors.text.secondary,
     textAlign: 'center',
-    marginTop: 100,
+    marginBottom: 20,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+    marginTop: 16,
+  },
+  backToCoursesButton: {
+    backgroundColor: AppColors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  backToCoursesText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.background.dark,
   },
 });
 
