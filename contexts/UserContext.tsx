@@ -24,12 +24,18 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [purchases, setPurchases] = useState<UserPurchase[]>([]);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const unsubscribe = firebaseService.onAuthStateChanged(async (authUser) => {
+      if (!isMounted) return;
+      
       setLoading(true);
       
       if (authUser) {
         try {
           const userProfile = await firebaseService.getUserProfile(authUser.uid);
+          
+          if (!isMounted) return;
           setUser(userProfile);
           
           if (userProfile) {
@@ -37,22 +43,29 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               firebaseService.getUserEnrollments(),
               firebaseService.getUserPurchases(),
             ]);
-            setEnrollments(userEnrollments);
-            setPurchases(userPurchases);
+            
+            if (!isMounted) return;
+            setEnrollments(userEnrollments.slice(0, 100)); // Limit enrollments to prevent memory issues
+            setPurchases(userPurchases.slice(0, 100)); // Limit purchases to prevent memory issues
           }
         } catch (error) {
           console.error('Error loading user data:', error);
         }
       } else {
+        if (!isMounted) return;
         setUser(null);
         setEnrollments([]);
         setPurchases([]);
       }
       
+      if (!isMounted) return;
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const createUserProfile = async (userData: Partial<User>) => {

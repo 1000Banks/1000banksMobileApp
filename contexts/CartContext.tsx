@@ -32,30 +32,40 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     let unsubscribeCart: (() => void) | undefined;
+    let isMounted = true;
 
     const unsubscribeAuth = firebaseService.onAuthStateChanged(async (user) => {
+      if (!isMounted) return;
+      
+      // Clean up previous cart subscription
+      if (unsubscribeCart) {
+        unsubscribeCart();
+        unsubscribeCart = undefined;
+      }
+      
       if (user) {
         setLoading(true);
         try {
           unsubscribeCart = firebaseService.subscribeToUserCart((items) => {
-            setCartItems(items);
+            if (!isMounted) return;
+            // Limit cart items to prevent memory issues
+            setCartItems(items.slice(0, 50));
             setLoading(false);
           });
         } catch (error) {
           console.error('Error loading cart:', error);
-          setLoading(false);
+          if (isMounted) setLoading(false);
         }
       } else {
-        setCartItems([]);
-        setLoading(false);
-        if (unsubscribeCart) {
-          unsubscribeCart();
-          unsubscribeCart = undefined;
+        if (isMounted) {
+          setCartItems([]);
+          setLoading(false);
         }
       }
     });
 
     return () => {
+      isMounted = false;
       unsubscribeAuth();
       if (unsubscribeCart) {
         unsubscribeCart();

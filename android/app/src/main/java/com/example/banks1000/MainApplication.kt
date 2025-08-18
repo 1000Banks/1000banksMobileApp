@@ -1,6 +1,6 @@
 package com.example.banks1000
 
-import android.app.Application
+import androidx.multidex.MultiDexApplication
 import android.content.res.Configuration
 
 import com.facebook.react.PackageList
@@ -16,7 +16,7 @@ import com.facebook.soloader.SoLoader
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
 
-class MainApplication : Application(), ReactApplication {
+class MainApplication : MultiDexApplication(), ReactApplication {
 
   override val reactNativeHost: ReactNativeHost = ReactNativeHostWrapper(
         this,

@@ -176,8 +176,8 @@ AuthProvider
 - `+not-found.tsx` - 404/error page
 
 ### Data Architecture
-- **Firebase Backend**: Full Firestore integration for dynamic data
-- **Static Data**: Course catalog and product listings (can be migrated to Firestore)
+- **Firebase Backend**: Full Firestore integration for dynamic data with admin management
+- **Hybrid Data**: Courses and products fetch from Firebase first, fallback to static data
 - **Real-time Sync**: Cart and user data sync across devices
 - **Offline Support**: Firebase handles offline caching automatically
 
@@ -215,3 +215,30 @@ If you encounter Firebase configuration issues:
 - Verify authentication providers are enabled
 - Ensure Firestore security rules match the app's data structure
 - Use React Native Debugger to inspect context values
+
+## Admin System
+
+### Admin Authentication & Access
+- **Dual Admin Check**: Requires both email whitelist (`admin@1000banks.com`) AND Firestore `isAdmin: true` flag
+- **Access Methods**: 
+  - Dialog choice during admin email login
+  - "Admin Dashboard" button in Account settings for admin users
+- **Security**: Two-factor verification prevents unauthorized admin access
+
+### Admin Features
+- **Product Management** (`/admin-products`): Full CRUD operations with image picker, features, specifications
+- **Course Management** (`/admin-courses`): Full CRUD operations with curriculum builder, categories, levels  
+- **Dashboard** (`/admin-dashboard`): Statistics overview and quick actions
+- **Real-time Updates**: Admin changes immediately reflect in user-facing screens
+
+### Required Firebase Setup for Admin
+- **Firestore Indexes**: Composite indexes required for products/courses queries (see ADMIN_SETUP.md)
+- **Security Rules**: Admin verification function in Firestore rules
+- **Admin User Document**: Must have `isAdmin: true` boolean field in users collection
+- **Admin Email**: Configured in `services/firebase.ts` checkAdminEmail method
+
+### Admin Data Flow
+- All screens fetch from Firebase first, fallback to static data
+- Admin-created content appears immediately in courses/shop screens
+- Course detail screen supports both Firebase and static course formats
+- Products support extended fields (fullDescription, features, specifications)

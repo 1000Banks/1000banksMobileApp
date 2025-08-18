@@ -14,7 +14,9 @@
       "Bash(grep:*)",
       "Bash(find:*)",
       "Bash(npm uninstall:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(./gradlew:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

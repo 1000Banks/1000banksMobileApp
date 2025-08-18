@@ -25,6 +25,15 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const loadingWidth = useRef(new Animated.Value(0)).current;
+  
+  // Cleanup animated values on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      fadeAnim.removeAllListeners();
+      scaleAnim.removeAllListeners();
+      loadingWidth.removeAllListeners();
+    };
+  }, [fadeAnim, scaleAnim, loadingWidth]);
 
 useEffect(() => {
   // Simple entrance animations - fade in and scale up once
