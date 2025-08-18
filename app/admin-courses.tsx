@@ -147,6 +147,28 @@ const AdminCourses = () => {
     setModalVisible(true);
   };
 
+  // Utility function to clean undefined values from objects
+  const cleanUndefinedValues = (obj: any): any => {
+    if (obj === null || obj === undefined) return null;
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => cleanUndefinedValues(item));
+    }
+    
+    if (typeof obj === 'object') {
+      const cleaned: any = {};
+      for (const key in obj) {
+        const value = obj[key];
+        if (value !== undefined) {
+          cleaned[key] = cleanUndefinedValues(value);
+        }
+      }
+      return cleaned;
+    }
+    
+    return obj;
+  };
+
   const handleSaveCourse = async () => {
     if (!courseForm.title || !courseForm.price || !courseForm.category || !courseForm.instructor) {
       Alert.alert('Error', 'Please fill in all required fields');
@@ -154,13 +176,40 @@ const AdminCourses = () => {
     }
 
     try {
+      // Clean modules data to ensure no undefined values
+      const cleanedModules = courseForm.modules.map(module => ({
+        id: module.id,
+        title: module.title,
+        description: module.description || '',
+        order: module.order,
+        contents: module.contents.map(content => {
+          const cleanedContent: any = {
+            id: content.id,
+            type: content.type,
+            title: content.title,
+            description: content.description || '',
+            isLocked: content.isLocked,
+            order: content.order,
+          };
+          
+          // Only add content or url based on type
+          if (content.type === 'text') {
+            cleanedContent.content = content.content || '';
+          } else {
+            cleanedContent.url = content.url || '';
+          }
+          
+          return cleanedContent;
+        }),
+      }));
+
       const courseData = {
         title: courseForm.title,
         description: courseForm.description,
         price: courseForm.price,
         image: courseForm.image,
         curriculum: courseForm.curriculum.filter(c => c.trim() !== ''),
-        modules: courseForm.modules,
+        modules: cleanedModules,
         duration: courseForm.duration,
         level: courseForm.level,
         category: courseForm.category,
@@ -170,11 +219,18 @@ const AdminCourses = () => {
         isActive: courseForm.isActive,
       };
 
+      // Clean the entire course data object
+      const cleanedCourseData = cleanUndefinedValues(courseData);
+      
+      // Debug logging
+      console.log('Course data before cleaning:', JSON.stringify(courseData, null, 2));
+      console.log('Course data after cleaning:', JSON.stringify(cleanedCourseData, null, 2));
+
       if (editingCourse) {
-        await firebaseService.updateCourse(editingCourse.id, courseData);
+        await firebaseService.updateCourse(editingCourse.id, cleanedCourseData);
         Alert.alert('Success', 'Course updated successfully');
       } else {
-        await firebaseService.createCourse(courseData);
+        await firebaseService.createCourse(cleanedCourseData);
         Alert.alert('Success', 'Course created successfully');
       }
 
@@ -373,16 +429,23 @@ const AdminCourses = () => {
     }
 
     const contentId = editingContent ? editingContent.id : `content_${Date.now()}`;
+    
+    // Build content object without undefined values
     const newContent: ModuleContent = {
       id: contentId,
       type: contentForm.type,
       title: contentForm.title,
-      description: contentForm.description,
-      content: contentForm.type === 'text' ? contentForm.content : undefined,
-      url: contentForm.type !== 'text' ? contentForm.url : undefined,
+      description: contentForm.description || '',
       isLocked: contentForm.isLocked,
       order: contentForm.order,
-    };
+    } as ModuleContent;
+    
+    // Only add content or url based on type
+    if (contentForm.type === 'text') {
+      newContent.content = contentForm.content;
+    } else {
+      newContent.url = contentForm.url;
+    }
 
     const modules = [...courseForm.modules];
     const module = { ...modules[editingModuleIndex] };
