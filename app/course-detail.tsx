@@ -44,7 +44,7 @@ const CourseDetailScreen = () => {
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
-            curriculum: fallbackCourse.modules || [],
+            curriculum: fallbackCourse.curriculum || [],
           });
         }
       }
@@ -60,7 +60,7 @@ const CourseDetailScreen = () => {
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date(),
-          curriculum: fallbackCourse.modules || [],
+          curriculum: fallbackCourse.curriculum || [],
         });
       }
     } finally {
@@ -186,7 +186,53 @@ const CourseDetailScreen = () => {
         </View>
 
         {/* Course Modules */}
-        {(course.curriculum || course.modules) && (
+        {course.modules && course.modules.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Course Modules</Text>
+            {course.modules.map((module, moduleIndex) => (
+              <View key={module.id} style={styles.moduleContainer}>
+                <View style={styles.moduleHeader}>
+                  <Text style={styles.moduleTitle}>{module.order}. {module.title}</Text>
+                </View>
+                {module.description && (
+                  <Text style={styles.moduleDescription}>{module.description}</Text>
+                )}
+                
+                {/* Module Contents */}
+                <View style={styles.moduleContents}>
+                  {module.contents.map((content, contentIndex) => (
+                    <View key={content.id} style={styles.contentItem}>
+                      <View style={styles.contentIcon}>
+                        <Ionicons 
+                          name={
+                            content.type === 'video' ? 'play-circle' :
+                            content.type === 'image' ? 'image' :
+                            content.type === 'audio' ? 'musical-notes' :
+                            content.type === 'pdf' ? 'document' : 'text'
+                          } 
+                          size={16} 
+                          color={content.isLocked ? AppColors.text.secondary : AppColors.primary} 
+                        />
+                      </View>
+                      <Text style={[styles.contentTitle, { 
+                        color: content.isLocked ? AppColors.text.secondary : AppColors.text.primary 
+                      }]}>
+                        {content.title}
+                      </Text>
+                      <View style={styles.contentLockStatus}>
+                        <Ionicons 
+                          name={content.isLocked ? "lock-closed" : "lock-open"} 
+                          size={14} 
+                          color={content.isLocked ? "#EF4444" : "#10B981"} 
+                        />
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (course.curriculum || course.modules) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Course Curriculum</Text>
             {(course.curriculum || course.modules || []).map((module, index) => (
@@ -392,6 +438,49 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: AppColors.text.primary,
+  },
+  // New module styles
+  moduleContainer: {
+    backgroundColor: AppColors.background.card,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  moduleHeader: {
+    marginBottom: 8,
+  },
+  moduleTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.text.primary,
+  },
+  moduleDescription: {
+    fontSize: 14,
+    color: AppColors.text.secondary,
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  moduleContents: {
+    backgroundColor: AppColors.background.dark,
+    borderRadius: 8,
+    padding: 12,
+  },
+  contentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginBottom: 4,
+  },
+  contentIcon: {
+    marginRight: 12,
+  },
+  contentTitle: {
+    flex: 1,
+    fontSize: 14,
+  },
+  contentLockStatus: {
+    marginLeft: 8,
   },
   benefitItem: {
     flexDirection: 'row',

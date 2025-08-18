@@ -21,7 +21,7 @@ import firebaseService, { Course } from '@/services/firebase';
 const { width } = Dimensions.get('window');
 
 // Fallback data
-const fallbackCoursesData: Course[] = [
+export const fallbackCoursesData: Course[] = [
   {
     id: 'c1',
     title: 'Financial Freedom Fundamentals',
@@ -29,11 +29,16 @@ const fallbackCoursesData: Course[] = [
     price: '$297',
     duration: '8 weeks',
     level: 'Beginner',
+    category: 'Finance',
     rating: 4.9,
     students: 1250,
+    studentsCount: 1250,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     description: 'Master the basics of financial planning, budgeting, and wealth building. This comprehensive course covers everything you need to start your journey to financial independence.',
     image: '📚',
-    modules: [
+    curriculum: [
       'Introduction to Financial Freedom',
       'Understanding Money Mindset',
       'Budgeting Strategies',
@@ -60,9 +65,14 @@ const fallbackCoursesData: Course[] = [
     level: 'Intermediate',
     rating: 4.8,
     students: 856,
+    studentsCount: 856,
+    category: 'Trading',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     description: 'Learn professional trading strategies for stocks, forex, and cryptocurrency. Get real-time trade alerts and copy our proven strategies.',
     image: '📈',
-    modules: [
+    curriculum: [
       'Trading Psychology',
       'Technical Analysis Deep Dive',
       'Fundamental Analysis',
@@ -89,9 +99,14 @@ const fallbackCoursesData: Course[] = [
     level: 'Advanced',
     rating: 5.0,
     students: 423,
+    studentsCount: 423,
+    category: 'Investing',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     description: 'The ultimate program to achieve complete financial independence. Learn how to create your own banking system and build generational wealth.',
     image: '🏦',
-    modules: [
+    curriculum: [
       'Infinite Banking Concept',
       'Creating Your Banking System',
       'Advanced Investment Strategies',
@@ -115,12 +130,17 @@ const fallbackCoursesData: Course[] = [
     instructor: 'Business Development Team',
     price: '$497',
     duration: '6 weeks',
-    level: 'All Levels',
+    level: 'Beginner',
     rating: 4.7,
     students: 2100,
+    studentsCount: 2100,
+    category: 'Business',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     description: 'Turn your business idea into reality. Learn proven strategies to start, grow, and scale your business while maintaining financial stability.',
     image: '🚀',
-    modules: [
+    curriculum: [
       'Business Ideation',
       'Market Research & Validation',
       'Business Planning',
@@ -147,9 +167,14 @@ const fallbackCoursesData: Course[] = [
     level: 'Beginner',
     rating: 4.6,
     students: 678,
+    studentsCount: 678,
+    category: 'Finance',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     description: 'Understand and implement comprehensive financial protection strategies. Learn how to safeguard your wealth and family\'s future.',
     image: '🛡️',
-    modules: [
+    curriculum: [
       'Insurance Fundamentals',
       'Life Insurance Strategies',
       'Health & Disability Coverage',
@@ -176,9 +201,14 @@ const fallbackCoursesData: Course[] = [
     level: 'Intermediate',
     rating: 4.9,
     students: 945,
+    studentsCount: 945,
+    category: 'Real Estate',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     description: 'Build wealth through strategic real estate investments. Learn how to find, fund, and flip properties or build a rental portfolio.',
     image: '🏠',
-    modules: [
+    curriculum: [
       'Real Estate Market Analysis',
       'Finding Investment Properties',
       'Financing Strategies',
@@ -219,15 +249,7 @@ const CoursesScreen: React.FC<CoursesScreenProps> = ({ embedded = false }) => {
     } catch (error) {
       console.error('Error loading courses:', error);
       // Use fallback data if Firebase fails
-      setCourses(fallbackCoursesData.map(course => ({
-        ...course,
-        studentsCount: course.students || 0,
-        category: 'Finance',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        curriculum: course.modules || [],
-      })));
+      setCourses(fallbackCoursesData);
     } finally {
       setLoading(false);
     }

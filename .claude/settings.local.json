@@ -16,7 +16,8 @@
       "Bash(npm uninstall:*)",
       "Bash(cat:*)",
       "Bash(./gradlew:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

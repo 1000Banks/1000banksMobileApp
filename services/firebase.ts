@@ -12,6 +12,27 @@ export interface User {
   updatedAt: Date;
 }
 
+export interface ModuleContent {
+  id: string;
+  type: 'video' | 'text' | 'image' | 'audio' | 'pdf';
+  title: string;
+  description?: string;
+  url?: string;
+  content?: string;
+  duration?: string;
+  fileSize?: string;
+  isLocked: boolean;
+  order: number;
+}
+
+export interface CourseModule {
+  id: string;
+  title: string;
+  description?: string;
+  order: number;
+  contents: ModuleContent[];
+}
+
 export interface Course {
   id: string;
   title: string;
@@ -19,12 +40,15 @@ export interface Course {
   price: string;
   image: string;
   curriculum: string[];
+  modules?: CourseModule[];
   duration: string;
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   category: string;
   instructor: string;
   rating: number;
   studentsCount: number;
+  students?: number;
+  benefits?: string[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -482,6 +506,208 @@ class FirebaseService {
       id: doc.id,
       ...doc.data(),
     })) as Course[];
+  }
+
+  // Media upload methods - simplified version without Firebase Storage
+  // In production, you would integrate with a cloud storage service like Cloudinary, AWS S3, etc.
+  async uploadMediaFile(uri: string, type: ModuleContent['type'], fileName?: string): Promise<string> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    // For now, we'll store the local URI or use placeholder URLs
+    // In production, you would upload to a cloud storage service here
+    console.log('Media upload requested for:', type, fileName);
+    
+    // Return the URI for now - in production this would be a cloud URL
+    return uri;
+  }
+
+  async deleteMediaFile(url: string): Promise<void> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    // In production, you would delete from cloud storage here
+    console.log('Media delete requested for:', url);
+  }
+
+  // Module content management
+  async addModuleContent(
+    courseId: string,
+    moduleId: string,
+    content: Omit<ModuleContent, 'id'>
+  ): Promise<string> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    const course = await this.getCourse(courseId);
+    if (!course) throw new Error('Course not found');
+
+    const contentId = `content_${Date.now()}`;
+    const newContent: ModuleContent = {
+      ...content,
+      id: contentId,
+    };
+
+    const modules = course.modules || [];
+    const moduleIndex = modules.findIndex(m => m.id === moduleId);
+    
+    if (moduleIndex === -1) {
+      throw new Error('Module not found');
+    }
+
+    modules[moduleIndex].contents.push(newContent);
+    
+    await this.updateCourse(courseId, { modules });
+    return contentId;
+  }
+
+  async updateModuleContent(
+    courseId: string,
+    moduleId: string,
+    contentId: string,
+    updates: Partial<ModuleContent>
+  ): Promise<void> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    const course = await this.getCourse(courseId);
+    if (!course) throw new Error('Course not found');
+
+    const modules = course.modules || [];
+    const moduleIndex = modules.findIndex(m => m.id === moduleId);
+    
+    if (moduleIndex === -1) {
+      throw new Error('Module not found');
+    }
+
+    const contentIndex = modules[moduleIndex].contents.findIndex(c => c.id === contentId);
+    
+    if (contentIndex === -1) {
+      throw new Error('Content not found');
+    }
+
+    modules[moduleIndex].contents[contentIndex] = {
+      ...modules[moduleIndex].contents[contentIndex],
+      ...updates,
+    };
+    
+    await this.updateCourse(courseId, { modules });
+  }
+
+  async deleteModuleContent(courseId: string, moduleId: string, contentId: string): Promise<void> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    const course = await this.getCourse(courseId);
+    if (!course) throw new Error('Course not found');
+
+    const modules = course.modules || [];
+    const moduleIndex = modules.findIndex(m => m.id === moduleId);
+    
+    if (moduleIndex === -1) {
+      throw new Error('Module not found');
+    }
+
+    const contentIndex = modules[moduleIndex].contents.findIndex(c => c.id === contentId);
+    
+    if (contentIndex === -1) {
+      throw new Error('Content not found');
+    }
+
+    // Delete media file if it exists
+    const content = modules[moduleIndex].contents[contentIndex];
+    if (content.url && content.type !== 'text') {
+      try {
+        await this.deleteMediaFile(content.url);
+      } catch (error) {
+        console.warn('Failed to delete media file:', error);
+      }
+    }
+
+    modules[moduleIndex].contents.splice(contentIndex, 1);
+    await this.updateCourse(courseId, { modules });
+  }
+
+  async addCourseModule(courseId: string, module: Omit<CourseModule, 'id'>): Promise<string> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    const course = await this.getCourse(courseId);
+    if (!course) throw new Error('Course not found');
+
+    const moduleId = `module_${Date.now()}`;
+    const newModule: CourseModule = {
+      ...module,
+      id: moduleId,
+      contents: module.contents || [],
+    };
+
+    const modules = course.modules || [];
+    modules.push(newModule);
+    modules.sort((a, b) => a.order - b.order);
+    
+    await this.updateCourse(courseId, { modules });
+    return moduleId;
+  }
+
+  async updateCourseModule(
+    courseId: string,
+    moduleId: string,
+    updates: Partial<CourseModule>
+  ): Promise<void> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    const course = await this.getCourse(courseId);
+    if (!course) throw new Error('Course not found');
+
+    const modules = course.modules || [];
+    const moduleIndex = modules.findIndex(m => m.id === moduleId);
+    
+    if (moduleIndex === -1) {
+      throw new Error('Module not found');
+    }
+
+    modules[moduleIndex] = {
+      ...modules[moduleIndex],
+      ...updates,
+    };
+    
+    if (updates.order !== undefined) {
+      modules.sort((a, b) => a.order - b.order);
+    }
+    
+    await this.updateCourse(courseId, { modules });
+  }
+
+  async deleteCourseModule(courseId: string, moduleId: string): Promise<void> {
+    const isAdmin = await this.isAdmin();
+    if (!isAdmin) throw new Error('Unauthorized: Admin access required');
+
+    const course = await this.getCourse(courseId);
+    if (!course) throw new Error('Course not found');
+
+    const modules = course.modules || [];
+    const moduleIndex = modules.findIndex(m => m.id === moduleId);
+    
+    if (moduleIndex === -1) {
+      throw new Error('Module not found');
+    }
+
+    // Delete all media files in the module
+    const moduleContents = modules[moduleIndex].contents;
+    for (const content of moduleContents) {
+      if (content.url && content.type !== 'text') {
+        try {
+          await this.deleteMediaFile(content.url);
+        } catch (error) {
+          console.warn('Failed to delete media file:', error);
+        }
+      }
+    }
+
+    modules.splice(moduleIndex, 1);
+    await this.updateCourse(courseId, { modules });
   }
 }
 
