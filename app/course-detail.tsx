@@ -7,24 +7,40 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  Modal,
+  Alert,
+  Image,
+  Linking,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/contexts/CartContext';
-import firebaseService, { Course } from '@/services/firebase';
+import { useUser } from '@/contexts/UserContext';
+import firebaseService, { Course, ModuleContent } from '@/services/firebase';
 import { fallbackCoursesData } from './courses';
 
 const CourseDetailScreen = () => {
   const { courseId } = useLocalSearchParams();
   const router = useRouter();
   const { addToCart } = useCart();
+  const { user, enrollments } = useUser();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
+  const [contentModalVisible, setContentModalVisible] = useState(false);
+  const [selectedContent, setSelectedContent] = useState<ModuleContent | null>(null);
+  const [isEnrolled, setIsEnrolled] = useState(false);
 
   useEffect(() => {
     loadCourse();
   }, [courseId]);
+
+  useEffect(() => {
+    // Check if user is enrolled in this course
+    if (enrollments && courseId) {
+      setIsEnrolled(enrollments.some(e => e.courseId === courseId));
+    }
+  }, [enrollments, courseId]);
 
   const loadCourse = async () => {
     try {
@@ -98,6 +114,38 @@ const CourseDetailScreen = () => {
       description: course.description
     });
     router.push('/checkout');
+  };
+
+  const handleContentClick = (content: ModuleContent) => {
+    // Check if content is locked and user is not enrolled
+    if (content.isLocked && !isEnrolled) {
+      Alert.alert(
+        'Content Locked',
+        'This content is locked. Please enroll in the course to access all content.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Enroll Now', onPress: handleEnroll }
+        ]
+      );
+      return;
+    }
+
+    // If content is unlocked or user is enrolled, show content
+    setSelectedContent(content);
+    setContentModalVisible(true);
+  };
+
+  const handleOpenExternalContent = async (url: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Cannot open this URL');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to open content');
+    }
   };
 
   const renderStars = (rating: number) => {
@@ -201,7 +249,12 @@ const CourseDetailScreen = () => {
                 {/* Module Contents */}
                 <View style={styles.moduleContents}>
                   {module.contents.map((content, contentIndex) => (
-                    <View key={content.id} style={styles.contentItem}>
+                    <TouchableOpacity 
+                      key={content.id} 
+                      style={styles.contentItem}
+                      onPress={() => handleContentClick(content)}
+                      activeOpacity={0.7}
+                    >
                       <View style={styles.contentIcon}>
                         <Ionicons 
                           name={
@@ -211,22 +264,22 @@ const CourseDetailScreen = () => {
                             content.type === 'pdf' ? 'document' : 'text'
                           } 
                           size={16} 
-                          color={content.isLocked ? AppColors.text.secondary : AppColors.primary} 
+                          color={content.isLocked && !isEnrolled ? AppColors.text.secondary : AppColors.primary} 
                         />
                       </View>
                       <Text style={[styles.contentTitle, { 
-                        color: content.isLocked ? AppColors.text.secondary : AppColors.text.primary 
+                        color: content.isLocked && !isEnrolled ? AppColors.text.secondary : AppColors.text.primary 
                       }]}>
                         {content.title}
                       </Text>
                       <View style={styles.contentLockStatus}>
                         <Ionicons 
-                          name={content.isLocked ? "lock-closed" : "lock-open"} 
+                          name={content.isLocked && !isEnrolled ? "lock-closed" : "lock-open"} 
                           size={14} 
-                          color={content.isLocked ? "#EF4444" : "#10B981"} 
+                          color={content.isLocked && !isEnrolled ? "#EF4444" : "#10B981"} 
                         />
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   ))}
                 </View>
               </View>
@@ -294,6 +347,108 @@ const CourseDetailScreen = () => {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Content Viewing Modal */}
+      <Modal
+        visible={contentModalVisible}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setContentModalVisible(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity 
+              onPress={() => setContentModalVisible(false)}
+              style={styles.modalCloseButton}
+            >
+              <Ionicons name="close" size={24} color={AppColors.text.primary} />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle} numberOfLines={1}>
+              {selectedContent?.title}
+            </Text>
+            <View style={{ width: 40 }} />
+          </View>
+
+          <ScrollView 
+            style={styles.modalContent}
+            contentContainerStyle={styles.modalContentContainer}
+          >
+            {selectedContent && (
+              <>
+                {/* Content Type Icon */}
+                <View style={styles.contentTypeIndicator}>
+                  <Ionicons 
+                    name={
+                      selectedContent.type === 'video' ? 'play-circle' :
+                      selectedContent.type === 'image' ? 'image' :
+                      selectedContent.type === 'audio' ? 'musical-notes' :
+                      selectedContent.type === 'pdf' ? 'document' : 'text'
+                    } 
+                    size={48} 
+                    color={AppColors.primary} 
+                  />
+                  <Text style={styles.contentTypeText}>
+                    {selectedContent.type.charAt(0).toUpperCase() + selectedContent.type.slice(1)} Content
+                  </Text>
+                </View>
+
+                {/* Content Description */}
+                {selectedContent.description && (
+                  <Text style={styles.contentDescription}>
+                    {selectedContent.description}
+                  </Text>
+                )}
+
+                {/* Content Display */}
+                {selectedContent.type === 'text' ? (
+                  <View style={styles.textContentContainer}>
+                    <Text style={styles.textContent}>
+                      {selectedContent.content}
+                    </Text>
+                  </View>
+                ) : selectedContent.type === 'image' && selectedContent.url ? (
+                  <View style={styles.imageContentContainer}>
+                    <Image 
+                      source={{ uri: selectedContent.url }} 
+                      style={styles.contentImage}
+                      resizeMode="contain"
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.mediaContentContainer}>
+                    <Text style={styles.mediaContentText}>
+                      This is a {selectedContent.type} content.
+                    </Text>
+                    {selectedContent.url && (
+                      <TouchableOpacity 
+                        style={styles.openExternalButton}
+                        onPress={() => handleOpenExternalContent(selectedContent.url!)}
+                      >
+                        <Ionicons name="open-outline" size={20} color={AppColors.background.dark} />
+                        <Text style={styles.openExternalButtonText}>
+                          Open {selectedContent.type}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* Access Status */}
+                <View style={styles.accessStatusContainer}>
+                  <Ionicons 
+                    name="checkmark-circle" 
+                    size={20} 
+                    color="#10B981" 
+                  />
+                  <Text style={styles.accessStatusText}>
+                    You have access to this content
+                  </Text>
+                </View>
+              </>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -589,6 +744,114 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: AppColors.background.dark,
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: AppColors.background.dark,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: AppColors.background.card,
+  },
+  modalCloseButton: {
+    padding: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: AppColors.text.primary,
+    flex: 1,
+    marginHorizontal: 20,
+    textAlign: 'center',
+  },
+  modalContent: {
+    flex: 1,
+  },
+  modalContentContainer: {
+    padding: 20,
+  },
+  contentTypeIndicator: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  contentTypeText: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+    marginTop: 8,
+  },
+  contentDescription: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+    lineHeight: 24,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  textContentContainer: {
+    backgroundColor: AppColors.background.card,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+  },
+  textContent: {
+    fontSize: 16,
+    color: AppColors.text.primary,
+    lineHeight: 24,
+  },
+  imageContentContainer: {
+    backgroundColor: AppColors.background.card,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  contentImage: {
+    width: '100%',
+    height: 300,
+    borderRadius: 8,
+  },
+  mediaContentContainer: {
+    backgroundColor: AppColors.background.card,
+    borderRadius: 12,
+    padding: 24,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  mediaContentText: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  openExternalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AppColors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    gap: 8,
+  },
+  openExternalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.background.dark,
+  },
+  accessStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+  },
+  accessStatusText: {
+    fontSize: 14,
+    color: '#10B981',
   },
 });
 
