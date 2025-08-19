@@ -1,25 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import {
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  Modal,
-  FlatList,
-  Image,
-  Switch,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { AppColors } from '@/constants/Colors';
+import firebaseService, { Course, CourseCurriculum, CourseModule, ModuleContent } from '@/services/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { AppColors } from '@/constants/Colors';
-import firebaseService, { Course, CourseModule, ModuleContent } from '@/services/firebase';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const AdminCourses = () => {
   const params = useLocalSearchParams();
@@ -33,8 +33,14 @@ const AdminCourses = () => {
     price: '',
     image: '📚',
     imageUrl: '',
-    curriculum: [''],
-    modules: [] as CourseModule[],
+    curriculum: {
+      id: '',
+      title: '',
+      description: '',
+      objectives: [''],
+      totalDuration: '',
+      modules: [] as CourseModule[],
+    } as CourseCurriculum,
     duration: '',
     level: 'Beginner' as Course['level'],
     category: '',
@@ -52,6 +58,7 @@ const AdminCourses = () => {
     title: '',
     description: '',
     order: 1,
+    isLocked: false,
   });
   const [contentForm, setContentForm] = useState({
     type: 'text' as ModuleContent['type'],
@@ -90,8 +97,14 @@ const AdminCourses = () => {
       price: '',
       image: '📚',
       imageUrl: '',
-      curriculum: [''],
-      modules: [],
+      curriculum: {
+        id: `curriculum_${Date.now()}`,
+        title: '',
+        description: '',
+        objectives: [''],
+        totalDuration: '',
+        modules: [],
+      },
       duration: '',
       level: 'Beginner',
       category: '',
@@ -108,6 +121,7 @@ const AdminCourses = () => {
       title: '',
       description: '',
       order: 1,
+      isLocked: false,
     });
     setEditingModule(null);
     setEditingModuleIndex(-1);
@@ -128,14 +142,40 @@ const AdminCourses = () => {
 
   const handleEditCourse = (course: Course) => {
     setEditingCourse(course);
+    
+    // Handle backward compatibility
+    let curriculumData: CourseCurriculum;
+    if (course.curriculum) {
+      curriculumData = course.curriculum;
+    } else if (course.modules) {
+      // Convert old modules format to new curriculum format
+      curriculumData = {
+        id: `curriculum_${Date.now()}`,
+        title: course.title,
+        description: course.description,
+        objectives: [],
+        totalDuration: course.duration,
+        modules: course.modules,
+      };
+    } else {
+      // Create empty curriculum
+      curriculumData = {
+        id: `curriculum_${Date.now()}`,
+        title: course.title,
+        description: course.description,
+        objectives: course.oldCurriculum || [],
+        totalDuration: course.duration,
+        modules: [],
+      };
+    }
+    
     setCourseForm({
       title: course.title,
       description: course.description,
       price: course.price,
       image: course.image || '📚',
       imageUrl: '',
-      curriculum: course.curriculum || [''],
-      modules: course.modules || [],
+      curriculum: curriculumData,
       duration: course.duration,
       level: course.level,
       category: course.category,
@@ -176,40 +216,47 @@ const AdminCourses = () => {
     }
 
     try {
-      // Clean modules data to ensure no undefined values
-      const cleanedModules = courseForm.modules.map(module => ({
-        id: module.id,
-        title: module.title,
-        description: module.description || '',
-        order: module.order,
-        contents: module.contents.map(content => {
-          const cleanedContent: any = {
-            id: content.id,
-            type: content.type,
-            title: content.title,
-            description: content.description || '',
-            isLocked: content.isLocked,
-            order: content.order,
-          };
-          
-          // Only add content or url based on type
-          if (content.type === 'text') {
-            cleanedContent.content = content.content || '';
-          } else {
-            cleanedContent.url = content.url || '';
-          }
-          
-          return cleanedContent;
-        }),
-      }));
+      // Prepare curriculum data
+      const curriculumData: CourseCurriculum = {
+        id: courseForm.curriculum.id || `curriculum_${Date.now()}`,
+        title: courseForm.curriculum.title || courseForm.title,
+        description: courseForm.curriculum.description || courseForm.description,
+        objectives: (courseForm.curriculum.objectives ?? []).filter(obj => obj.trim() !== ''),
+        totalDuration: courseForm.curriculum.totalDuration || courseForm.duration,
+        modules: courseForm.curriculum.modules.map(module => ({
+          id: module.id,
+          title: module.title,
+          description: module.description || '',
+          order: module.order,
+          isLocked: module.isLocked || false,
+          contents: module.contents.map(content => {
+            const cleanedContent: any = {
+              id: content.id,
+              type: content.type,
+              title: content.title,
+              description: content.description || '',
+              isLocked: content.isLocked,
+              order: content.order,
+            };
+            
+            // Only add content or url based on type
+            if (content.type === 'text') {
+              cleanedContent.content = content.content || '';
+            } else {
+              cleanedContent.url = content.url || '';
+            }
+            
+            return cleanedContent;
+          }),
+        })),
+      };
 
       const courseData = {
         title: courseForm.title,
         description: courseForm.description,
         price: courseForm.price,
         image: courseForm.image,
-        curriculum: courseForm.curriculum.filter(c => c.trim() !== ''),
-        modules: cleanedModules,
+        curriculum: curriculumData,
         duration: courseForm.duration,
         level: courseForm.level,
         category: courseForm.category,
@@ -307,22 +354,25 @@ const AdminCourses = () => {
     );
   };
 
-  const addCurriculumItem = () => {
-    setCourseForm({
-      ...courseForm,
-      curriculum: [...courseForm.curriculum, ''],
-    });
+  const addCurriculumObjective = () => {
+    const curriculum = { ...courseForm.curriculum };
+    curriculum.objectives = [...(curriculum.objectives ?? []), ''];
+    setCourseForm({ ...courseForm, curriculum });
   };
 
-  const updateCurriculumItem = (index: number, value: string) => {
-    const newCurriculum = [...courseForm.curriculum];
-    newCurriculum[index] = value;
-    setCourseForm({ ...courseForm, curriculum: newCurriculum });
+  const updateCurriculumObjective = (index: number, value: string) => {
+    const curriculum = { ...courseForm.curriculum };
+    if (!curriculum.objectives) {
+      curriculum.objectives = [];
+    }
+    curriculum.objectives[index] = value;
+    setCourseForm({ ...courseForm, curriculum });
   };
 
-  const removeCurriculumItem = (index: number) => {
-    const newCurriculum = courseForm.curriculum.filter((_, i) => i !== index);
-    setCourseForm({ ...courseForm, curriculum: newCurriculum });
+  const removeCurriculumObjective = (index: number) => {
+    const curriculum = { ...courseForm.curriculum };
+    curriculum.objectives = (curriculum.objectives ?? []).filter((_, i) => i !== index);
+    setCourseForm({ ...courseForm, curriculum });
   };
 
   // Module management functions
@@ -338,6 +388,7 @@ const AdminCourses = () => {
       title: module.title,
       description: module.description || '',
       order: module.order,
+      isLocked: module.isLocked || false,
     });
     setModuleModalVisible(true);
   };
@@ -354,10 +405,12 @@ const AdminCourses = () => {
       title: moduleForm.title,
       description: moduleForm.description,
       order: moduleForm.order,
+      isLocked: moduleForm.isLocked || false,
       contents: editingModule ? editingModule.contents : [],
     };
 
-    const modules = [...courseForm.modules];
+    const curriculum = { ...courseForm.curriculum };
+    const modules = [...curriculum.modules];
     
     if (editingModuleIndex >= 0) {
       modules[editingModuleIndex] = newModule;
@@ -366,7 +419,8 @@ const AdminCourses = () => {
     }
     
     modules.sort((a, b) => a.order - b.order);
-    setCourseForm({ ...courseForm, modules });
+    curriculum.modules = modules;
+    setCourseForm({ ...courseForm, curriculum });
     setModuleModalVisible(false);
     resetModuleForm();
   };
@@ -381,9 +435,11 @@ const AdminCourses = () => {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            const modules = [...courseForm.modules];
+            const curriculum = { ...courseForm.curriculum };
+            const modules = [...curriculum.modules];
             modules.splice(index, 1);
-            setCourseForm({ ...courseForm, modules });
+            curriculum.modules = modules;
+            setCourseForm({ ...courseForm, curriculum });
           },
         },
       ]
@@ -447,7 +503,8 @@ const AdminCourses = () => {
       newContent.url = contentForm.url;
     }
 
-    const modules = [...courseForm.modules];
+    const curriculum = { ...courseForm.curriculum };
+    const modules = [...curriculum.modules];
     const module = { ...modules[editingModuleIndex] };
     
     if (editingContent) {
@@ -461,8 +518,9 @@ const AdminCourses = () => {
     
     module.contents.sort((a, b) => a.order - b.order);
     modules[editingModuleIndex] = module;
+    curriculum.modules = modules;
     
-    setCourseForm({ ...courseForm, modules });
+    setCourseForm({ ...courseForm, curriculum });
     setContentModalVisible(false);
     resetContentForm();
   };
@@ -477,11 +535,13 @@ const AdminCourses = () => {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            const modules = [...courseForm.modules];
+            const curriculum = { ...courseForm.curriculum };
+            const modules = [...curriculum.modules];
             const module = { ...modules[moduleIndex] };
             module.contents.splice(contentIndex, 1);
             modules[moduleIndex] = module;
-            setCourseForm({ ...courseForm, modules });
+            curriculum.modules = modules;
+            setCourseForm({ ...courseForm, curriculum });
           },
         },
       ]
@@ -830,43 +890,92 @@ const AdminCourses = () => {
                 </View>
               </View>
 
-              {/* Curriculum */}
+              {/* Curriculum Information */}
               <View style={styles.inputGroup}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.inputLabel}>Curriculum</Text>
-                  <TouchableOpacity onPress={addCurriculumItem}>
-                    <Ionicons name="add-circle" size={24} color={AppColors.primary} />
-                  </TouchableOpacity>
+                <Text style={styles.sectionTitle}>📚 Curriculum Information</Text>
+                
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Curriculum Title</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={courseForm.curriculum.title}
+                    onChangeText={(text) => setCourseForm({ 
+                      ...courseForm, 
+                      curriculum: { ...courseForm.curriculum, title: text }
+                    })}
+                    placeholder="e.g., Complete Trading Mastery Program"
+                    placeholderTextColor={AppColors.text.secondary}
+                  />
                 </View>
-                {courseForm.curriculum.map((item, index) => (
-                  <View key={index} style={styles.curriculumRow}>
-                    <Text style={styles.curriculumNumber}>{index + 1}.</Text>
-                    <TextInput
-                      style={[styles.input, { flex: 1 }]}
-                      value={item}
-                      onChangeText={(text) => updateCurriculumItem(index, text)}
-                      placeholder="Module/Lesson title"
-                      placeholderTextColor={AppColors.text.secondary}
-                    />
-                    <TouchableOpacity
-                      onPress={() => removeCurriculumItem(index)}
-                      style={styles.removeButton}
-                    >
-                      <Ionicons name="close-circle" size={24} color="#EF4444" />
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Curriculum Description</Text>
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    value={courseForm.curriculum.description}
+                    onChangeText={(text) => setCourseForm({ 
+                      ...courseForm, 
+                      curriculum: { ...courseForm.curriculum, description: text }
+                    })}
+                    placeholder="Describe the overall curriculum goals and structure"
+                    placeholderTextColor={AppColors.text.secondary}
+                    multiline
+                    numberOfLines={3}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Total Duration</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={courseForm.curriculum.totalDuration}
+                    onChangeText={(text) => setCourseForm({ 
+                      ...courseForm, 
+                      curriculum: { ...courseForm.curriculum, totalDuration: text }
+                    })}
+                    placeholder="e.g., 12 weeks, 40 hours"
+                    placeholderTextColor={AppColors.text.secondary}
+                  />
+                </View>
+
+                {/* Learning Objectives */}
+                <View style={styles.inputGroup}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.inputLabel}>Learning Objectives</Text>
+                    <TouchableOpacity onPress={addCurriculumObjective}>
+                      <Ionicons name="add-circle" size={24} color={AppColors.primary} />
                     </TouchableOpacity>
                   </View>
-                ))}
+                  {(courseForm.curriculum.objectives ?? []).map((objective, index) => (
+                    <View key={index} style={styles.curriculumRow}>
+                      <Text style={styles.curriculumNumber}>{index + 1}.</Text>
+                      <TextInput
+                        style={[styles.input, { flex: 1 }]}
+                        value={objective}
+                        onChangeText={(text) => updateCurriculumObjective(index, text)}
+                        placeholder="Learning objective"
+                        placeholderTextColor={AppColors.text.secondary}
+                      />
+                      <TouchableOpacity
+                        onPress={() => removeCurriculumObjective(index)}
+                        style={styles.removeButton}
+                      >
+                        <Ionicons name="close-circle" size={24} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
               </View>
 
               {/* Course Modules */}
               <View style={styles.inputGroup}>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.inputLabel}>Course Modules</Text>
+                  <Text style={styles.sectionTitle}>📋 Course Modules</Text>
                   <TouchableOpacity onPress={handleAddModule}>
                     <Ionicons name="add-circle" size={24} color={AppColors.primary} />
                   </TouchableOpacity>
                 </View>
-                {courseForm.modules.map((module, moduleIndex) => (
+                {courseForm.curriculum.modules.map((module, moduleIndex) => (
                   <View key={module.id} style={styles.moduleCard}>
                     <View style={styles.moduleHeader}>
                       <Text style={styles.moduleTitle}>{module.order}. {module.title}</Text>
@@ -929,7 +1038,7 @@ const AdminCourses = () => {
                     </View>
                   </View>
                 ))}
-                {courseForm.modules.length === 0 && (
+                {courseForm.curriculum.modules.length === 0 && (
                   <Text style={styles.noModulesText}>No modules added yet. Click + to add your first module.</Text>
                 )}
               </View>
@@ -1018,6 +1127,22 @@ const AdminCourses = () => {
                   placeholderTextColor={AppColors.text.secondary}
                   keyboardType="numeric"
                 />
+              </View>
+
+              {/* Module Lock Status */}
+              <View style={styles.switchRow}>
+                <Text style={styles.inputLabel}>Module Access</Text>
+                <View style={styles.switchContainer}>
+                  <Text style={styles.switchLabel}>
+                    {moduleForm.isLocked ? 'Locked' : 'Unlocked'}
+                  </Text>
+                  <Switch
+                    value={!moduleForm.isLocked}
+                    onValueChange={(value) => setModuleForm({ ...moduleForm, isLocked: !value })}
+                    trackColor={{ false: '#374151', true: AppColors.primary }}
+                    thumbColor={!moduleForm.isLocked ? AppColors.background.dark : '#9CA3AF'}
+                  />
+                </View>
               </View>
 
               <TouchableOpacity style={styles.saveButton} onPress={handleSaveModule}>
@@ -1469,6 +1594,12 @@ const styles = StyleSheet.create({
     color: AppColors.primary,
     fontWeight: '600',
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: AppColors.text.primary,
+    marginBottom: 16,
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1495,6 +1626,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 24,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   saveButton: {
     backgroundColor: AppColors.primary,

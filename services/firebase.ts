@@ -31,6 +31,16 @@ export interface CourseModule {
   description?: string;
   order: number;
   contents: ModuleContent[];
+  isLocked?: boolean; // Module-level lock
+}
+
+export interface CourseCurriculum {
+  id: string;
+  title: string;
+  description: string;
+  objectives?: string[];
+  totalDuration?: string;
+  modules: CourseModule[];
 }
 
 export interface Course {
@@ -39,8 +49,9 @@ export interface Course {
   description: string;
   price: string;
   image: string;
-  curriculum: string[];
-  modules?: CourseModule[];
+  curriculum?: CourseCurriculum; // New structured curriculum
+  oldCurriculum?: string[]; // Keep for backward compatibility
+  modules?: CourseModule[]; // Keep for backward compatibility
   duration: string;
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   category: string;

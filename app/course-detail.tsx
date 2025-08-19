@@ -17,7 +17,7 @@ import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/contexts/CartContext';
 import { useUser } from '@/contexts/UserContext';
-import firebaseService, { Course, ModuleContent } from '@/services/firebase';
+import firebaseService, { Course, ModuleContent, CourseCurriculum } from '@/services/firebase';
 import { fallbackCoursesData } from './courses';
 
 const CourseDetailScreen = () => {
@@ -60,7 +60,8 @@ const CourseDetailScreen = () => {
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
-            curriculum: fallbackCourse.curriculum || [],
+            oldCurriculum: fallbackCourse.curriculum || [],
+            modules: fallbackCourse.modules || [],
           });
         }
       }
@@ -76,7 +77,8 @@ const CourseDetailScreen = () => {
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date(),
-          curriculum: fallbackCourse.curriculum || [],
+          oldCurriculum: fallbackCourse.curriculum || [],
+          modules: fallbackCourse.modules || [],
         });
       }
     } finally {
@@ -116,9 +118,11 @@ const CourseDetailScreen = () => {
     router.push('/checkout');
   };
 
-  const handleContentClick = (content: ModuleContent) => {
-    // Check if content is locked and user is not enrolled
-    if (content.isLocked && !isEnrolled) {
+  const handleContentClick = (content: ModuleContent, module?: any) => {
+    // Check if content or module is locked and user is not enrolled
+    const isContentLocked = content.isLocked || (module?.isLocked);
+    
+    if (isContentLocked && !isEnrolled) {
       Alert.alert(
         'Content Locked',
         'This content is locked. Please enroll in the course to access all content.',
@@ -233,11 +237,105 @@ const CourseDetailScreen = () => {
           <Text style={styles.description}>{course.description}</Text>
         </View>
 
-        {/* Course Modules */}
-        {course.modules && course.modules.length > 0 ? (
+        {/* Course Curriculum */}
+        {course.curriculum && course.curriculum.modules ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📚 {course.curriculum.title || 'Course Curriculum'}</Text>
+            
+            {/* Curriculum Description */}
+            {course.curriculum.description && (
+              <Text style={styles.curriculumDescription}>{course.curriculum.description}</Text>
+            )}
+            
+            {/* Learning Objectives */}
+            {course.curriculum.objectives && course.curriculum.objectives.length > 0 && (
+              <View style={styles.objectivesSection}>
+                <Text style={styles.objectivesTitle}>🎯 Learning Objectives</Text>
+                {(course.curriculum.objectives || []).map((objective, index) => (
+                  <View key={index} style={styles.objectiveItem}>
+                    <Ionicons name="checkmark-circle" size={16} color={AppColors.primary} />
+                    <Text style={styles.objectiveText}>{objective}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            
+            {/* Course Duration */}
+            {course.curriculum.totalDuration && (
+              <View style={styles.durationSection}>
+                <Ionicons name="time" size={20} color={AppColors.primary} />
+                <Text style={styles.durationText}>Total Duration: {course.curriculum.totalDuration}</Text>
+              </View>
+            )}
+            
+            {/* Course Modules */}
+            <Text style={styles.modulesTitle}>📋 Course Modules</Text>
+            {course.curriculum.modules && course.curriculum.modules.length > 0 ? (
+              (course.curriculum.modules || []).map((module, moduleIndex) => (
+              <View key={module.id} style={styles.moduleContainer}>
+                <View style={styles.moduleHeader}>
+                  <Text style={styles.moduleTitle}>{module.order}. {module.title}</Text>
+                  <View style={styles.moduleLockStatus}>
+                    <Ionicons 
+                      name={module.isLocked && !isEnrolled ? "lock-closed" : "lock-open"} 
+                      size={16} 
+                      color={module.isLocked && !isEnrolled ? "#EF4444" : "#10B981"} 
+                    />
+                  </View>
+                </View>
+                {module.description && (
+                  <Text style={styles.moduleDescription}>{module.description}</Text>
+                )}
+                
+                {/* Module Contents */}
+                <View style={styles.moduleContents}>
+                  {(module.contents || []).map((content, contentIndex) => (
+                    <TouchableOpacity 
+                      key={content.id} 
+                      style={styles.contentItem}
+                      onPress={() => handleContentClick(content, module)}
+                      activeOpacity={0.7}
+                      disabled={module.isLocked && !isEnrolled}
+                    >
+                      <View style={styles.contentIcon}>
+                        <Ionicons 
+                          name={
+                            content.type === 'video' ? 'play-circle' :
+                            content.type === 'image' ? 'image' :
+                            content.type === 'audio' ? 'musical-notes' :
+                            content.type === 'pdf' ? 'document' : 'text'
+                          } 
+                          size={16} 
+                          color={(content.isLocked || module.isLocked) && !isEnrolled ? AppColors.text.secondary : AppColors.primary} 
+                        />
+                      </View>
+                      <Text style={[styles.contentTitle, { 
+                        color: (content.isLocked || module.isLocked) && !isEnrolled ? AppColors.text.secondary : AppColors.text.primary 
+                      }]}>
+                        {content.title}
+                      </Text>
+                      <View style={styles.contentLockStatus}>
+                        <Ionicons 
+                          name={(content.isLocked || module.isLocked) && !isEnrolled ? "lock-closed" : "lock-open"} 
+                          size={14} 
+                          color={(content.isLocked || module.isLocked) && !isEnrolled ? "#EF4444" : "#10B981"} 
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))
+            ) : (
+              <View style={styles.noModulesContainer}>
+                <Text style={styles.noModulesText}>No modules available yet.</Text>
+              </View>
+            )}
+          </View>
+        ) : (course.modules && course.modules.length > 0) ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Course Modules</Text>
-            {course.modules.map((module, moduleIndex) => (
+            {(course.modules || []).map((module, moduleIndex) => (
               <View key={module.id} style={styles.moduleContainer}>
                 <View style={styles.moduleHeader}>
                   <Text style={styles.moduleTitle}>{module.order}. {module.title}</Text>
@@ -248,11 +346,11 @@ const CourseDetailScreen = () => {
                 
                 {/* Module Contents */}
                 <View style={styles.moduleContents}>
-                  {module.contents.map((content, contentIndex) => (
+                  {(module.contents || []).map((content, contentIndex) => (
                     <TouchableOpacity 
                       key={content.id} 
                       style={styles.contentItem}
-                      onPress={() => handleContentClick(content)}
+                      onPress={() => handleContentClick(content, module)}
                       activeOpacity={0.7}
                     >
                       <View style={styles.contentIcon}>
@@ -285,15 +383,15 @@ const CourseDetailScreen = () => {
               </View>
             ))}
           </View>
-        ) : (course.curriculum || course.modules) && (
+        ) : (course.oldCurriculum) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Course Curriculum</Text>
-            {(course.curriculum || course.modules || []).map((module, index) => (
+            {(course.oldCurriculum || []).map((item, index) => (
               <View key={index} style={styles.moduleItem}>
                 <View style={styles.moduleNumber}>
                   <Text style={styles.moduleNumberText}>{index + 1}</Text>
                 </View>
-                <Text style={styles.moduleText}>{module}</Text>
+                <Text style={styles.moduleText}>{item}</Text>
                 <Ionicons name="lock-closed" size={16} color={AppColors.text.secondary} />
               </View>
             ))}
@@ -304,7 +402,7 @@ const CourseDetailScreen = () => {
         {course.benefits && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>What You'll Get</Text>
-            {course.benefits.map((benefit, index) => (
+            {(course.benefits || []).map((benefit, index) => (
               <View key={index} style={styles.benefitItem}>
                 <Ionicons name="checkmark-circle" size={20} color={AppColors.primary} />
                 <Text style={styles.benefitText}>{benefit}</Text>
@@ -852,6 +950,68 @@ const styles = StyleSheet.create({
   accessStatusText: {
     fontSize: 14,
     color: '#10B981',
+  },
+  // New curriculum styles
+  curriculumDescription: {
+    fontSize: 16,
+    color: AppColors.text.secondary,
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  objectivesSection: {
+    marginBottom: 20,
+  },
+  objectivesTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: AppColors.text.primary,
+    marginBottom: 12,
+  },
+  objectiveItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    gap: 8,
+  },
+  objectiveText: {
+    fontSize: 14,
+    color: AppColors.text.secondary,
+    flex: 1,
+    lineHeight: 20,
+  },
+  durationSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AppColors.background.card,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+    gap: 8,
+  },
+  durationText: {
+    fontSize: 14,
+    color: AppColors.text.primary,
+    fontWeight: '600',
+  },
+  modulesTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: AppColors.text.primary,
+    marginBottom: 16,
+  },
+  moduleLockStatus: {
+    marginLeft: 8,
+  },
+  noModulesContainer: {
+    backgroundColor: AppColors.background.card,
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  noModulesText: {
+    fontSize: 14,
+    color: AppColors.text.secondary,
+    fontStyle: 'italic',
   },
 });
 
