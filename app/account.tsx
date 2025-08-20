@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppColors } from '@/constants/Colors';
@@ -17,76 +18,47 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import firebaseService from '@/services/firebase';
 
-interface Course {
-  id: string;
+interface EnrolledCourse {
+  courseId: string;
   title: string;
+  description: string;
+  thumbnail: string;
   progress: number;
-  totalLessons: number;
-  completedLessons: number;
+  enrolledAt: Date;
+  lastAccessedAt: Date;
 }
 
-interface Order {
+interface Purchase {
   id: string;
-  orderNumber: string;
-  date: string;
-  total: number;
-  status: 'delivered' | 'shipped' | 'processing';
+  uid: string;
   items: Array<{
+    id: string;
     name: string;
+    price: string;
+    type: 'product' | 'course';
     quantity: number;
-    price: number;
   }>;
+  total: number;
+  createdAt: Date;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  paymentMethod?: string;
 }
-
-const mockCourses: Course[] = [
-  {
-    id: '1',
-    title: 'Financial Freedom Blueprint',
-    progress: 75,
-    totalLessons: 12,
-    completedLessons: 9,
-  },
-  {
-    id: '2',
-    title: 'Trading Fundamentals',
-    progress: 30,
-    totalLessons: 20,
-    completedLessons: 6,
-  },
-];
-
-const mockOrders: Order[] = [
-  {
-    id: '1',
-    orderNumber: 'ORD-001',
-    date: '2024-01-15',
-    total: 89.99,
-    status: 'delivered',
-    items: [
-      { name: 'Affirmation T-Shirt', quantity: 2, price: 29.99 },
-      { name: 'Success Mindset Course', quantity: 1, price: 29.99 },
-    ],
-  },
-  {
-    id: '2',
-    orderNumber: 'ORD-002',
-    date: '2024-01-10',
-    total: 149.99,
-    status: 'shipped',
-    items: [
-      { name: 'Financial Planning Course', quantity: 1, price: 149.99 },
-    ],
-  },
-];
 
 const AccountScreen = () => {
   const [activeTab, setActiveTab] = useState<'learnings' | 'orders' | 'profile'>('learnings');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const { user, signOut, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    checkAdminStatus();
+    if (user) {
+      checkAdminStatus();
+      fetchUserData();
+    }
   }, [user]);
 
   const checkAdminStatus = async () => {
@@ -94,6 +66,41 @@ const AccountScreen = () => {
       const adminEmail = await firebaseService.checkAdminEmail(user.email);
       const userProfile = await firebaseService.getUserProfile();
       setIsAdmin(adminEmail || userProfile?.isAdmin || false);
+    }
+  };
+
+  const fetchUserData = async () => {
+    try {
+      // Fetch enrolled courses
+      setCoursesLoading(true);
+      const enrollments = await firebaseService.getUserEnrollments();
+      
+      // Get course details for each enrollment
+      const coursesWithDetails = await Promise.all(
+        enrollments.map(async (enrollment) => {
+          const courseData = await firebaseService.getCourse(enrollment.courseId);
+          return {
+            courseId: enrollment.courseId,
+            title: courseData?.title || 'Unknown Course',
+            description: courseData?.description || '',
+            thumbnail: courseData?.thumbnail || '',
+            progress: enrollment.progress || 0,
+            enrolledAt: enrollment.enrolledAt,
+            lastAccessedAt: enrollment.lastAccessedAt,
+          };
+        })
+      );
+      setEnrolledCourses(coursesWithDetails);
+      
+      // Fetch purchase history
+      setOrdersLoading(true);
+      const userPurchases = await firebaseService.getUserPurchases();
+      setPurchases(userPurchases as Purchase[]);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setCoursesLoading(false);
+      setOrdersLoading(false);
     }
   };
 
@@ -144,53 +151,109 @@ const AccountScreen = () => {
   const renderLearnings = () => (
     <View style={styles.tabContent}>
       <Text style={styles.sectionTitle}>My Courses</Text>
-      {mockCourses.map((course) => (
-        <View key={course.id} style={styles.courseCard}>
-          <View style={styles.courseHeader}>
-            <Text style={styles.courseTitle}>{course.title}</Text>
-            <Text style={styles.courseProgress}>{course.progress}%</Text>
-          </View>
-          <View style={styles.progressBar}>
-            <View 
-              style={[styles.progressFill, { width: `${course.progress}%` }]} 
-            />
-          </View>
-          <Text style={styles.courseStats}>
-            {course.completedLessons} of {course.totalLessons} lessons completed
-          </Text>
+      {coursesLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={AppColors.primary} />
+        </View>
+      ) : enrolledCourses.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="book-outline" size={60} color={AppColors.text.secondary} />
+          <Text style={styles.emptyTitle}>No Courses Yet</Text>
+          <Text style={styles.emptySubtitle}>Start learning by enrolling in a course</Text>
           <TouchableOpacity 
-            style={styles.continueButton}
-            onPress={() => Alert.alert('Continue Learning', 'Course content will be available soon')}
+            style={styles.browseButton}
+            onPress={() => router.push('/')}
           >
-            <Text style={styles.continueButtonText}>Continue Learning</Text>
+            <Text style={styles.browseButtonText}>Browse Courses</Text>
           </TouchableOpacity>
         </View>
-      ))}
+      ) : (
+        enrolledCourses.map((course) => (
+          <View key={course.courseId} style={styles.courseCard}>
+            {course.thumbnail && (
+              <Image source={{ uri: course.thumbnail }} style={styles.courseThumbnail} />
+            )}
+            <View style={styles.courseInfo}>
+              <View style={styles.courseHeader}>
+                <Text style={styles.courseTitle}>{course.title}</Text>
+                <Text style={styles.courseProgress}>{Math.round(course.progress)}%</Text>
+              </View>
+              <View style={styles.progressBar}>
+                <View 
+                  style={[styles.progressFill, { width: `${course.progress}%` }]} 
+                />
+              </View>
+              <Text style={styles.courseStats}>
+                Enrolled {new Date(course.enrolledAt).toLocaleDateString()}
+              </Text>
+              <TouchableOpacity 
+                style={styles.continueButton}
+                onPress={() => router.push(`/course-detail?id=${course.courseId}`)}
+              >
+                <Text style={styles.continueButtonText}>Continue Learning</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))
+      )}
     </View>
   );
 
   const renderOrders = () => (
     <View style={styles.tabContent}>
       <Text style={styles.sectionTitle}>Order History</Text>
-      {mockOrders.map((order) => (
-        <View key={order.id} style={styles.orderCard}>
-          <View style={styles.orderHeader}>
-            <Text style={styles.orderNumber}>#{order.orderNumber}</Text>
-            <View style={[styles.statusBadge, styles[`status_${order.status}`]]}>
-              <Text style={styles.statusText}>{order.status.toUpperCase()}</Text>
-            </View>
-          </View>
-          <Text style={styles.orderDate}>{order.date}</Text>
-          <View style={styles.orderItems}>
-            {order.items.map((item, index) => (
-              <Text key={index} style={styles.orderItem}>
-                {item.quantity}x {item.name} - ${item.price}
-              </Text>
-            ))}
-          </View>
-          <Text style={styles.orderTotal}>Total: ${order.total}</Text>
+      {ordersLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={AppColors.primary} />
         </View>
-      ))}
+      ) : purchases.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="cart-outline" size={60} color={AppColors.text.secondary} />
+          <Text style={styles.emptyTitle}>No Orders Yet</Text>
+          <Text style={styles.emptySubtitle}>Your purchase history will appear here</Text>
+          <TouchableOpacity 
+            style={styles.browseButton}
+            onPress={() => router.push('/')}
+          >
+            <Text style={styles.browseButtonText}>Start Shopping</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        purchases.map((order) => {
+          const orderDate = order.createdAt instanceof Date ? order.createdAt : new Date(order.createdAt);
+          const totalAmount = order.items.reduce((sum, item) => {
+            const price = typeof item.price === 'string' 
+              ? parseFloat(item.price.replace('$', ''))
+              : parseFloat(item.price);
+            return sum + (price * item.quantity);
+          }, 0);
+          
+          return (
+            <View key={order.id} style={styles.orderCard}>
+              <View style={styles.orderHeader}>
+                <Text style={styles.orderNumber}>#{order.id.slice(-8).toUpperCase()}</Text>
+                <View style={[styles.statusBadge, styles[`status_${order.status}`]]}>
+                  <Text style={styles.statusText}>{order.status.toUpperCase()}</Text>
+                </View>
+              </View>
+              <Text style={styles.orderDate}>{orderDate.toLocaleDateString()}</Text>
+              <View style={styles.orderItems}>
+                {order.items.map((item, index) => (
+                  <Text key={index} style={styles.orderItem}>
+                    {item.quantity}x {item.name} - {item.price}
+                  </Text>
+                ))}
+              </View>
+              <View style={styles.orderFooter}>
+                <Text style={styles.paymentMethod}>
+                  {order.paymentMethod ? `Paid with ${order.paymentMethod}` : 'Payment method unknown'}
+                </Text>
+                <Text style={styles.orderTotal}>Total: ${totalAmount.toFixed(2)}</Text>
+              </View>
+            </View>
+          );
+        })
+      )}
     </View>
   );
 
@@ -202,7 +265,11 @@ const AccountScreen = () => {
       <View style={styles.profileCard}>
         <View style={styles.profileAvatar}>
           {user?.photoURL ? (
-            <Image source={{ uri: user.photoURL }} style={styles.avatarImage} />
+            <Image 
+              key={user.photoURL} 
+              source={{ uri: user.photoURL }} 
+              style={styles.avatarImage} 
+            />
           ) : (
             <Ionicons name="person" size={50} color={AppColors.primary} />
           )}
@@ -227,7 +294,7 @@ const AccountScreen = () => {
       <View style={styles.settingsSection}>
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => Alert.alert('Notifications', 'Notification settings coming soon')}
+          onPress={() => router.push('/notification-center')}
         >
           <Ionicons name="notifications" size={24} color={AppColors.primary} />
           <Text style={styles.settingText}>Notifications</Text>
@@ -236,7 +303,16 @@ const AccountScreen = () => {
 
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => Alert.alert('Privacy', 'Privacy settings coming soon')}
+          onPress={() => router.push('/payment-methods')}
+        >
+          <Ionicons name="card" size={24} color={AppColors.primary} />
+          <Text style={styles.settingText}>Payment Methods</Text>
+          <Ionicons name="chevron-forward" size={20} color={AppColors.text.secondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/privacy-security')}
         >
           <Ionicons name="shield-checkmark" size={24} color={AppColors.primary} />
           <Text style={styles.settingText}>Privacy & Security</Text>
@@ -245,7 +321,7 @@ const AccountScreen = () => {
 
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => Alert.alert('Help', 'Help center coming soon')}
+          onPress={() => router.push('/help-support')}
         >
           <Ionicons name="help-circle" size={24} color={AppColors.primary} />
           <Text style={styles.settingText}>Help & Support</Text>
@@ -434,14 +510,17 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  status_delivered: {
+  status_completed: {
     backgroundColor: AppColors.success + '20',
   },
-  status_shipped: {
+  status_processing: {
     backgroundColor: AppColors.primary + '20',
   },
-  status_processing: {
+  status_pending: {
     backgroundColor: AppColors.text.secondary + '20',
+  },
+  status_failed: {
+    backgroundColor: AppColors.error + '20',
   },
   statusText: {
     fontSize: 12,
@@ -588,6 +667,62 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: AppColors.text.secondary,
     marginBottom: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: AppColors.text.primary,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: AppColors.text.secondary,
+    marginBottom: 24,
+  },
+  browseButton: {
+    backgroundColor: AppColors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+  },
+  browseButtonText: {
+    color: AppColors.background.dark,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  courseThumbnail: {
+    width: '100%',
+    height: 120,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  courseInfo: {
+    flex: 1,
+  },
+  orderFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: AppColors.background.dark,
+  },
+  paymentMethod: {
+    fontSize: 14,
+    color: AppColors.text.secondary,
+    textTransform: 'capitalize',
   },
 });
 

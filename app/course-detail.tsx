@@ -21,7 +21,8 @@ import firebaseService, { Course, ModuleContent, CourseCurriculum } from '@/serv
 import { fallbackCoursesData } from './courses';
 
 const CourseDetailScreen = () => {
-  const { courseId } = useLocalSearchParams();
+  const { id } = useLocalSearchParams();
+  const courseId = id;
   const router = useRouter();
   const { addToCart } = useCart();
   const { user, enrollments } = useUser();
@@ -30,24 +31,79 @@ const CourseDetailScreen = () => {
   const [contentModalVisible, setContentModalVisible] = useState(false);
   const [selectedContent, setSelectedContent] = useState<ModuleContent | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [courseProgress, setCourseProgress] = useState(0);
+  const [completedContents, setCompletedContents] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadCourse();
+    loadEnrollmentData();
   }, [courseId]);
 
   useEffect(() => {
     // Check if user is enrolled in this course
     if (enrollments && courseId) {
-      setIsEnrolled(enrollments.some(e => e.courseId === courseId));
+      const enrollment = enrollments.find(e => e.courseId === courseId);
+      if (enrollment) {
+        setIsEnrolled(true);
+      }
     }
   }, [enrollments, courseId]);
 
+  // Recalculate progress when course data loads
+  useEffect(() => {
+    if (course && completedContents.size > 0) {
+      calculateAndSetProgress(completedContents);
+    }
+  }, [course]);
+
+  const loadEnrollmentData = async () => {
+    if (!courseId || !user) return;
+    
+    try {
+      const enrollment = await firebaseService.getEnrollmentDetails(courseId as string);
+      if (enrollment) {
+        setIsEnrolled(true);
+        if (enrollment.completedContents) {
+          const completedSet = new Set(enrollment.completedContents);
+          setCompletedContents(completedSet);
+          // Recalculate progress after course loads
+          if (course) {
+            calculateAndSetProgress(completedSet);
+          }
+        } else {
+          setCourseProgress(0);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading enrollment data:', error);
+    }
+  };
+
   const loadCourse = async () => {
     try {
+      console.log('Loading course with ID:', courseId);
+      
+      if (!courseId) {
+        console.error('No course ID provided');
+        setLoading(false);
+        return;
+      }
+      
       // First try to get from Firebase
       const firebaseCourse = await firebaseService.getCourse(courseId as string);
       if (firebaseCourse) {
-        setCourse(firebaseCourse);
+        // Ensure required fields have default values
+        setCourse({
+          ...firebaseCourse,
+          price: firebaseCourse.price || '$0',
+          title: firebaseCourse.title || 'Untitled Course',
+          description: firebaseCourse.description || '',
+          instructor: firebaseCourse.instructor || 'Unknown Instructor',
+          duration: firebaseCourse.duration || 'N/A',
+          level: firebaseCourse.level || 'Beginner',
+          rating: firebaseCourse.rating || 0,
+          image: firebaseCourse.image || '📚',
+        });
       } else {
         // Fallback to static data
         const fallbackCourse = fallbackCoursesData.find(c => c.id === courseId);
@@ -55,12 +111,13 @@ const CourseDetailScreen = () => {
           // Convert fallback course to Firebase format
           setCourse({
             ...fallbackCourse,
+            price: fallbackCourse.price || '$0',
             studentsCount: fallbackCourse.students || 0,
             category: 'Finance',
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
-            oldCurriculum: fallbackCourse.curriculum || [],
+            oldCurriculum: [],
             modules: fallbackCourse.modules || [],
           });
         }
@@ -72,12 +129,13 @@ const CourseDetailScreen = () => {
       if (fallbackCourse) {
         setCourse({
           ...fallbackCourse,
+          price: fallbackCourse.price || '$0',
           studentsCount: fallbackCourse.students || 0,
           category: 'Finance',
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date(),
-          oldCurriculum: fallbackCourse.curriculum || [],
+          oldCurriculum: [],
           modules: fallbackCourse.modules || [],
         });
       }
@@ -107,6 +165,12 @@ const CourseDetailScreen = () => {
   }
 
   const handleEnroll = () => {
+    if (isEnrolled) {
+      // Navigate to my learning page if already enrolled
+      router.push('/account?tab=learning');
+      return;
+    }
+    
     addToCart({
       id: course.id,
       name: course.title,
@@ -118,7 +182,7 @@ const CourseDetailScreen = () => {
     router.push('/checkout');
   };
 
-  const handleContentClick = (content: ModuleContent, module?: any) => {
+  const handleContentClick = async (content: ModuleContent, module?: any) => {
     // Check if content or module is locked and user is not enrolled
     const isContentLocked = content.isLocked || (module?.isLocked);
     
@@ -137,6 +201,26 @@ const CourseDetailScreen = () => {
     // If content is unlocked or user is enrolled, show content
     setSelectedContent(content);
     setContentModalVisible(true);
+    
+    // Mark content as completed if user is enrolled and not already completed
+    if (isEnrolled && !completedContents.has(content.id)) {
+      await toggleContentCompletion(content.id);
+    }
+  };
+
+  const toggleContentCompletion = async (contentId: string) => {
+    if (!isEnrolled || !courseId) return;
+    
+    const newCompletedContents = new Set(completedContents);
+    
+    if (completedContents.has(contentId)) {
+      newCompletedContents.delete(contentId);
+    } else {
+      newCompletedContents.add(contentId);
+    }
+    
+    setCompletedContents(newCompletedContents);
+    await updateCourseProgress(newCompletedContents);
   };
 
   const handleOpenExternalContent = async (url: string) => {
@@ -149,6 +233,45 @@ const CourseDetailScreen = () => {
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to open content');
+    }
+  };
+
+  const calculateAndSetProgress = (completedSet: Set<string>) => {
+    if (!course) return;
+    
+    // Calculate total content items
+    let totalContents = 0;
+    if (course.curriculum?.modules) {
+      course.curriculum.modules.forEach(module => {
+        totalContents += module.contents?.length || 0;
+      });
+    } else if (course.modules) {
+      course.modules.forEach(module => {
+        totalContents += module.contents?.length || 0;
+      });
+    }
+    
+    // Calculate progress percentage
+    const progress = totalContents > 0 ? Math.round((completedSet.size / totalContents) * 100) : 0;
+    console.log(`Progress calculation: ${completedSet.size} completed out of ${totalContents} total = ${progress}%`);
+    setCourseProgress(progress);
+    return progress;
+  };
+
+  const updateCourseProgress = async (completedSet: Set<string>) => {
+    if (!course || !courseId) return;
+    
+    const progress = calculateAndSetProgress(completedSet);
+    
+    // Update progress in Firebase with completed content IDs
+    try {
+      await firebaseService.updateCourseProgress(
+        courseId as string, 
+        progress || 0, 
+        Array.from(completedSet)
+      );
+    } catch (error) {
+      console.error('Error updating course progress:', error);
     }
   };
 
@@ -195,6 +318,18 @@ const CourseDetailScreen = () => {
           <Text style={styles.courseTitle}>{course.title}</Text>
           <Text style={styles.courseInstructor}>by {course.instructor}</Text>
           
+          {/* Progress Bar for Enrolled Users */}
+          {isEnrolled && (
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBarWrapper}>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: `${courseProgress}%` }]} />
+                </View>
+                <Text style={styles.progressText}>{courseProgress}% Complete</Text>
+              </View>
+            </View>
+          )}
+          
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <View style={styles.ratingContainer}>
@@ -237,36 +372,26 @@ const CourseDetailScreen = () => {
           <Text style={styles.description}>{course.description}</Text>
         </View>
 
+        {/* Learning Objectives */}
+        {course.objectives && course.objectives.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🎯 Learning Objectives</Text>
+            {course.objectives.map((objective, index) => (
+              <View key={index} style={styles.objectiveItem}>
+                <Ionicons name="checkmark-circle" size={20} color={AppColors.primary} />
+                <Text style={styles.objectiveText}>{objective}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Course Curriculum */}
         {course.curriculum && course.curriculum.modules ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📚 {course.curriculum.title || 'Course Curriculum'}</Text>
+            <Text style={styles.sectionTitle}>Course Modules</Text>
             
-            {/* Curriculum Description */}
-            {course.curriculum.description && (
-              <Text style={styles.curriculumDescription}>{course.curriculum.description}</Text>
-            )}
             
-            {/* Learning Objectives */}
-            {course.curriculum.objectives && course.curriculum.objectives.length > 0 && (
-              <View style={styles.objectivesSection}>
-                <Text style={styles.objectivesTitle}>🎯 Learning Objectives</Text>
-                {(course.curriculum.objectives || []).map((objective, index) => (
-                  <View key={index} style={styles.objectiveItem}>
-                    <Ionicons name="checkmark-circle" size={16} color={AppColors.primary} />
-                    <Text style={styles.objectiveText}>{objective}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
             
-            {/* Course Duration */}
-            {course.curriculum.totalDuration && (
-              <View style={styles.durationSection}>
-                <Ionicons name="time" size={20} color={AppColors.primary} />
-                <Text style={styles.durationText}>Total Duration: {course.curriculum.totalDuration}</Text>
-              </View>
-            )}
             
             {/* Course Modules */}
             <Text style={styles.modulesTitle}>📋 Course Modules</Text>
@@ -290,38 +415,64 @@ const CourseDetailScreen = () => {
                 {/* Module Contents */}
                 <View style={styles.moduleContents}>
                   {(module.contents || []).map((content, contentIndex) => (
-                    <TouchableOpacity 
-                      key={content.id} 
-                      style={styles.contentItem}
-                      onPress={() => handleContentClick(content, module)}
-                      activeOpacity={0.7}
-                      disabled={module.isLocked && !isEnrolled}
-                    >
-                      <View style={styles.contentIcon}>
-                        <Ionicons 
-                          name={
-                            content.type === 'video' ? 'play-circle' :
-                            content.type === 'image' ? 'image' :
-                            content.type === 'audio' ? 'musical-notes' :
-                            content.type === 'pdf' ? 'document' : 'text'
-                          } 
-                          size={16} 
-                          color={(content.isLocked || module.isLocked) && !isEnrolled ? AppColors.text.secondary : AppColors.primary} 
-                        />
-                      </View>
-                      <Text style={[styles.contentTitle, { 
-                        color: (content.isLocked || module.isLocked) && !isEnrolled ? AppColors.text.secondary : AppColors.text.primary 
-                      }]}>
-                        {content.title}
-                      </Text>
-                      <View style={styles.contentLockStatus}>
-                        <Ionicons 
-                          name={(content.isLocked || module.isLocked) && !isEnrolled ? "lock-closed" : "lock-open"} 
-                          size={14} 
-                          color={(content.isLocked || module.isLocked) && !isEnrolled ? "#EF4444" : "#10B981"} 
-                        />
-                      </View>
-                    </TouchableOpacity>
+                    <View key={content.id} style={styles.contentItemWrapper}>
+                      <TouchableOpacity 
+                        style={styles.contentItem}
+                        onPress={() => handleContentClick(content, module)}
+                        activeOpacity={0.7}
+                        disabled={module.isLocked && !isEnrolled}
+                      >
+                        <View style={styles.contentIcon}>
+                          <Ionicons 
+                            name={
+                              content.type === 'video' ? 'play-circle' :
+                              content.type === 'image' ? 'image' :
+                              content.type === 'audio' ? 'musical-notes' :
+                              content.type === 'pdf' ? 'document' : 'text'
+                            } 
+                            size={24} 
+                            color={
+                              (content.isLocked || module.isLocked) && !isEnrolled ? AppColors.text.secondary : AppColors.primary
+                            } 
+                          />
+                        </View>
+                        <Text style={[styles.contentTitle, { 
+                          color: (content.isLocked || module.isLocked) && !isEnrolled ? AppColors.text.secondary : AppColors.text.primary
+                        }]}>
+                          {content.title}
+                        </Text>
+                        {isEnrolled && (
+                          <TouchableOpacity 
+                            style={styles.completionCheckbox}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              toggleContentCompletion(content.id);
+                            }}
+                          >
+                            <Ionicons 
+                              name={completedContents.has(content.id) ? "checkbox" : "square-outline"} 
+                              size={24} 
+                              color={completedContents.has(content.id) ? AppColors.success : AppColors.text.secondary} 
+                            />
+                          </TouchableOpacity>
+                        )}
+                        {!isEnrolled && (content.isLocked || module.isLocked) && (
+                          <View style={styles.contentLockStatus}>
+                            <Ionicons 
+                              name="lock-closed" 
+                              size={14} 
+                              color="#EF4444" 
+                            />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                      {completedContents.has(content.id) && (
+                        <View style={styles.visitedIndicator}>
+                          <Ionicons name="checkmark-circle" size={16} color={AppColors.success} />
+                          <Text style={styles.visitedText}>Visited</Text>
+                        </View>
+                      )}
+                    </View>
                   ))}
                 </View>
               </View>
@@ -347,37 +498,63 @@ const CourseDetailScreen = () => {
                 {/* Module Contents */}
                 <View style={styles.moduleContents}>
                   {(module.contents || []).map((content, contentIndex) => (
-                    <TouchableOpacity 
-                      key={content.id} 
-                      style={styles.contentItem}
-                      onPress={() => handleContentClick(content, module)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.contentIcon}>
-                        <Ionicons 
-                          name={
-                            content.type === 'video' ? 'play-circle' :
-                            content.type === 'image' ? 'image' :
-                            content.type === 'audio' ? 'musical-notes' :
-                            content.type === 'pdf' ? 'document' : 'text'
-                          } 
-                          size={16} 
-                          color={content.isLocked && !isEnrolled ? AppColors.text.secondary : AppColors.primary} 
-                        />
-                      </View>
-                      <Text style={[styles.contentTitle, { 
-                        color: content.isLocked && !isEnrolled ? AppColors.text.secondary : AppColors.text.primary 
-                      }]}>
-                        {content.title}
-                      </Text>
-                      <View style={styles.contentLockStatus}>
-                        <Ionicons 
-                          name={content.isLocked && !isEnrolled ? "lock-closed" : "lock-open"} 
-                          size={14} 
-                          color={content.isLocked && !isEnrolled ? "#EF4444" : "#10B981"} 
-                        />
-                      </View>
-                    </TouchableOpacity>
+                    <View key={content.id} style={styles.contentItemWrapper}>
+                      <TouchableOpacity 
+                        style={styles.contentItem}
+                        onPress={() => handleContentClick(content, module)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.contentIcon}>
+                          <Ionicons 
+                            name={
+                              content.type === 'video' ? 'play-circle' :
+                              content.type === 'image' ? 'image' :
+                              content.type === 'audio' ? 'musical-notes' :
+                              content.type === 'pdf' ? 'document' : 'text'
+                            } 
+                            size={24} 
+                            color={
+                              content.isLocked && !isEnrolled ? AppColors.text.secondary : AppColors.primary
+                            } 
+                          />
+                        </View>
+                        <Text style={[styles.contentTitle, { 
+                          color: content.isLocked && !isEnrolled ? AppColors.text.secondary : AppColors.text.primary
+                        }]}>
+                          {content.title}
+                        </Text>
+                        {isEnrolled && (
+                          <TouchableOpacity 
+                            style={styles.completionCheckbox}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              toggleContentCompletion(content.id);
+                            }}
+                          >
+                            <Ionicons 
+                              name={completedContents.has(content.id) ? "checkbox" : "square-outline"} 
+                              size={24} 
+                              color={completedContents.has(content.id) ? AppColors.success : AppColors.text.secondary} 
+                            />
+                          </TouchableOpacity>
+                        )}
+                        {!isEnrolled && content.isLocked && (
+                          <View style={styles.contentLockStatus}>
+                            <Ionicons 
+                              name="lock-closed" 
+                              size={14} 
+                              color="#EF4444" 
+                            />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                      {completedContents.has(content.id) && (
+                        <View style={styles.visitedIndicator}>
+                          <Ionicons name="checkmark-circle" size={16} color={AppColors.success} />
+                          <Text style={styles.visitedText}>Visited</Text>
+                        </View>
+                      )}
+                    </View>
                   ))}
                 </View>
               </View>
@@ -435,10 +612,12 @@ const CourseDetailScreen = () => {
             <Text style={styles.price}>{course.price}</Text>
           </View>
           <TouchableOpacity 
-            style={styles.enrollButton}
+            style={[styles.enrollButton, isEnrolled && styles.enrolledButton]}
             onPress={handleEnroll}
           >
-            <Text style={styles.enrollButtonText}>Enroll Now</Text>
+            <Text style={[styles.enrollButtonText, isEnrolled && styles.enrolledButtonText]}>
+              {isEnrolled ? 'Go to My Learning' : 'Enroll Now'}
+            </Text>
           </TouchableOpacity>
           <Text style={styles.guarantee}>
             30-day money-back guarantee
@@ -806,9 +985,15 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     marginBottom: 12,
   },
+  enrolledButton: {
+    backgroundColor: '#10B981',
+  },
   enrollButtonText: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: AppColors.background.dark,
+  },
+  enrolledButtonText: {
     color: AppColors.background.dark,
   },
   guarantee: {
@@ -1011,6 +1196,49 @@ const styles = StyleSheet.create({
   noModulesText: {
     fontSize: 14,
     color: AppColors.text.secondary,
+    fontStyle: 'italic',
+  },
+  progressContainer: {
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  progressBarWrapper: {
+    gap: 8,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: AppColors.background.dark,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: AppColors.primary,
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 14,
+    color: AppColors.text.secondary,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  contentItemWrapper: {
+    marginBottom: 8,
+  },
+  completionCheckbox: {
+    marginLeft: 'auto',
+    padding: 4,
+  },
+  visitedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 40,
+    paddingTop: 4,
+    gap: 4,
+  },
+  visitedText: {
+    fontSize: 12,
+    color: AppColors.success,
     fontStyle: 'italic',
   },
 });

@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppColors } from '@/constants/Colors';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import firebaseService from '@/services/firebase';
 
 const { width } = Dimensions.get('window');
 
@@ -32,6 +33,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const { getCartCount } = useCart();
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const handleSignIn = () => {
     router.push('/sign-in');
@@ -40,6 +42,20 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const handleSignUp = () => {
     router.push('/sign-up');
   };
+
+  React.useEffect(() => {
+    if (!user) {
+      setUnreadNotifications(0);
+      return;
+    }
+
+    const unsubscribe = firebaseService.onUnreadNotificationsCount(
+      user.uid,
+      (count) => setUnreadNotifications(count)
+    );
+
+    return () => unsubscribe();
+  }, [user]);
 
   if (showMenuAndCart) {
     return (
@@ -63,6 +79,20 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 </View>
               )}
             </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={() => router.push('/notifications')}
+            >
+              <Ionicons name="notifications-outline" size={24} color={AppColors.text.primary} />
+              {unreadNotifications > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
             
             {user ? (
               <TouchableOpacity 
@@ -70,7 +100,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 onPress={() => setMenuOpen(!menuOpen)}
               >
                 {user.photoURL ? (
-                  <Image source={{ uri: user.photoURL }} style={styles.userAvatar} />
+                  <Image 
+                    key={user.photoURL}
+                    source={{ uri: user.photoURL }} 
+                    style={styles.userAvatar} 
+                  />
                 ) : (
                   <View style={styles.userAvatarPlaceholder}>
                     <Text style={styles.userInitial}>
@@ -120,7 +154,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 <View style={styles.userSection}>
                   <View style={styles.userInfo}>
                     {user.photoURL ? (
-                      <Image source={{ uri: user.photoURL }} style={styles.menuUserAvatar} />
+                      <Image 
+                        key={user.photoURL}
+                        source={{ uri: user.photoURL }} 
+                        style={styles.menuUserAvatar} 
+                      />
                     ) : (
                       <View style={styles.menuUserAvatarPlaceholder}>
                         <Text style={styles.menuUserInitial}>
@@ -237,6 +275,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     color: AppColors.background.dark,
+  },
+  notificationButton: {
+    padding: 8,
+    marginRight: 8,
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: AppColors.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: AppColors.text.primary,
   },
   menuButton: {
     padding: 8,

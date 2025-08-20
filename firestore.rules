@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && 
+        (request.auth.token.email == 'admin@1000banks.com' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+    }
+    
+    // Users can only access their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users can only access their own cart
+    match /carts/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users can only access their own purchases
+    match /purchases/{purchaseId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.uid;
+    }
+    
+    // Users can only access their own enrollments
+    match /enrollments/{enrollmentId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.uid;
+    }
+    
+    // Payment Methods - users can only access their own payment methods
+    match /paymentMethods/{paymentMethodId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.uid;
+      allow list: if request.auth != null;
+    }
+    
+    // Admin-only collections
+    match /auditLogs/{logId} {
+      allow read, write, create: if isAdmin();
+    }
+    
+    match /appSettings/{settingId} {
+      allow read, write, create: if isAdmin();
+    }
+    
+    // Public read access for courses and products
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if request.auth != null; // Add admin check if needed
+    }
+    
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null; // Add admin check if needed
+    }
+    
+    // Trading Days collection - public read, admin write
+    match /tradingDays/{dateId} {
+      allow read: if true; // Public can view trading days
+      allow write, create, delete: if isAdmin(); // Only admins can modify
+    }
+    
+    // Notifications - users can only access their own notifications
+    match /notifications/{notificationId} {
+      allow read, update: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+    
+    // Telegram Channels - public read, admin write
+    match /telegramChannels/{channelId} {
+      allow read: if true; // Public can view channels
+      allow write, create, delete: if isAdmin(); // Only admins can modify
+    }
+    
+    // Channel Subscriptions - users can access their own subscriptions
+    match /channelSubscriptions/{subscriptionId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+      allow update, delete: if isAdmin();
+    }
+    
+    // Telegram Messages - only subscribed users can read
+    match /telegramMessages/{messageId} {
+      allow read: if request.auth != null;
+      allow write, create: if isAdmin();
+    }
+  }
+}

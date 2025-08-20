@@ -11,7 +11,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.example.1000banks",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs access to camera to take photos for your profile picture.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to photo library to select photos for your profile picture.",
+        "NSPhotoLibraryAddUsageDescription": "This app needs permission to save photos to your photo library.",
+        "NSUserNotificationsUsageDescription": "This app needs permission to send you trading signals and important updates."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +26,16 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.example.banks1000",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "NOTIFICATIONS",
+        "POST_NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -44,7 +59,24 @@
         }
       }],
       "@react-native-firebase/app",
-      "@react-native-firebase/auth"
+      "@react-native-firebase/auth",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them as your profile picture.",
+          "cameraPermission": "The app accesses your camera to let you take a new profile picture."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#000000",
+          "sounds": [
+            "./assets/sounds/notification.wav"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

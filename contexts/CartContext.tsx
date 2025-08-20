@@ -91,6 +91,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const newCartItems = (() => {
       const existingItem = cartItems.find(i => i.id === item.id);
       if (existingItem) {
+        // For courses, don't increase quantity - keep at 1
+        if (item.type === 'course') {
+          return cartItems;
+        }
+        // For products, increase quantity
         return cartItems.map(i =>
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         );

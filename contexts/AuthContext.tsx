@@ -5,6 +5,7 @@ interface AuthContextType {
   user: FirebaseAuthTypes.User | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,10 +39,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const currentUser = auth().currentUser;
+      if (currentUser) {
+        // Force reload user data from Firebase
+        await currentUser.reload();
+        // Manually trigger a state update to ensure immediate reflection
+        setUser(currentUser);
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+    }
+  };
+
   const value = {
     user,
     loading,
     signOut,
+    refreshUser,
   };
 
   return (

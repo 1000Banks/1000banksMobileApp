@@ -9,6 +9,7 @@ CLAUDE.md/
 dist/
 web-build/
 expo-env.d.ts
+.env
 
 # Native
 *.orig.*
@@ -37,3 +38,12 @@ yarn-error.*
 *.tsbuildinfo
 
 # @end expo-cli
+# Local env files
+.env
+.env.*
+
+
+# Local env files
+.env
+.env.*
+

@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             (request.auth.token.admin == true || 
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+    }
+
+    // Users can only access their own user document
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      allow read: if isAdmin(); // Admins can read all users
+    }
+    
+    // Users can only access their own cart
+    match /carts/{userId} {
+      allow read, write: if isOwner(userId);
+      allow read: if isAdmin(); // Admins can read all carts
+    }
+    
+    // Users can access their own purchases, admins can access all
+    match /purchases/{purchaseId} {
+      allow read, write: if isAuthenticated() && 
+        (request.auth.uid == resource.data.uid || isAdmin());
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.uid;
+      allow list: if isAuthenticated();
+    }
+    
+    // Users can access their own enrollments, admins can access all
+    match /enrollments/{enrollmentId} {
+      allow read, write: if isAuthenticated() && 
+        (request.auth.uid == resource.data.uid || isAdmin());
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.uid;
+      allow list: if isAuthenticated();
+    }
+    
+    // Payment Methods - users can only access their own payment methods
+    match /paymentMethods/{paymentMethodId} {
+      allow read, write: if isAuthenticated() && 
+        request.auth.uid == resource.data.uid;
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.uid;
+      allow list: if isAuthenticated(); // Allow querying user's own cards
+    }
+    
+    // Admin-only collections
+    match /auditLogs/{logId} {
+      allow read, write, create, list: if isAdmin();
+    }
+    
+    match /appSettings/{settingId} {
+      allow read, write, create, list: if isAdmin();
+    }
+    
+    // Public read access for courses and products, admin write access
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write, create, delete: if isAdmin();
+      allow list: if true;
+    }
+    
+    match /products/{productId} {
+      allow read: if true;
+      allow write, create, delete: if isAdmin();
+      allow list: if true;
+    }
+  }
+}

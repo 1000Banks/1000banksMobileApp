@@ -118,6 +118,13 @@ const AdminDashboard = () => {
       color: '#8B5CF6',
     },
     {
+      title: 'Trading Calendar',
+      icon: 'calendar',
+      description: 'Manage live trading days',
+      onPress: () => router.push('/admin-trading'),
+      color: '#06B6D4',
+    },
+    {
       title: 'Analytics',
       icon: 'analytics',
       description: 'View sales and engagement metrics',

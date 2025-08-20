@@ -10,18 +10,21 @@ import {
   Image,
   ActionSheetIOS,
   Platform,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import AppHeader from '@/components/AppHeader';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUser } from '@/contexts/UserContext';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import auth from '@react-native-firebase/auth';
 
 const EditProfileScreen = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const userContext = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   
@@ -30,16 +33,80 @@ const EditProfileScreen = () => {
   const [email, setEmail] = useState(user?.email || '');
   const [profileImage, setProfileImage] = useState(user?.photoURL || '');
 
-  const requestPermissions = async () => {
+  const requestMediaLibraryPermissions = async () => {
+    const { status: existingStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();
+    
+    if (existingStatus === 'granted') {
+      return true;
+    }
+    
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Sorry, we need camera roll permissions to change your profile picture.');
+      Alert.alert(
+        'Permission Required', 
+        'Sorry, we need camera roll permissions to change your profile picture. Please enable it in your device settings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => {
+            // This will open device settings on iOS
+            if (Platform.OS === 'ios') {
+              Linking.openURL('app-settings:');
+            }
+          }}
+        ]
+      );
       return false;
     }
     return true;
   };
 
-  const showImagePicker = () => {
+  const requestCameraPermissions = async () => {
+    const { status: existingStatus } = await ImagePicker.getCameraPermissionsAsync();
+    
+    if (existingStatus === 'granted') {
+      return true;
+    }
+    
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission Required', 
+        'Sorry, we need camera permissions to take photos. Please enable it in your device settings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => {
+            if (Platform.OS === 'ios') {
+              Linking.openURL('app-settings:');
+            }
+          }}
+        ]
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const showImagePicker = async () => {
+    // Check permissions status first
+    const { status: mediaLibraryStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();
+    const { status: cameraStatus } = await ImagePicker.getCameraPermissionsAsync();
+    
+    // If neither permission has been requested yet, show an informative dialog
+    if (mediaLibraryStatus === 'undetermined' || cameraStatus === 'undetermined') {
+      Alert.alert(
+        'Photo Access',
+        '1000Banks would like to access your photos and camera to let you update your profile picture.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Continue', onPress: showImagePickerOptions }
+        ]
+      );
+    } else {
+      showImagePickerOptions();
+    }
+  };
+
+  const showImagePickerOptions = () => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -68,40 +135,45 @@ const EditProfileScreen = () => {
   };
 
   const openCamera = async () => {
-    const hasPermission = await requestPermissions();
-    if (!hasPermission) return;
+    const hasCameraPermission = await requestCameraPermissions();
+    if (!hasCameraPermission) return;
 
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Sorry, we need camera permissions to take photos.');
-      return;
-    }
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
+      if (!result.canceled && result.assets[0]) {
+        setProfileImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Camera error:', error);
+      Alert.alert('Error', 'Failed to open camera. Please try again.');
     }
   };
 
   const openImageLibrary = async () => {
-    const hasPermission = await requestPermissions();
+    const hasPermission = await requestMediaLibraryPermissions();
     if (!hasPermission) return;
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        presentationStyle: 'fullScreen', // iOS specific
+      });
 
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
+      if (!result.canceled && result.assets[0]) {
+        setProfileImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Image library error:', error);
+      Alert.alert('Error', 'Failed to open image library. Please try again.');
     }
   };
 
@@ -109,21 +181,48 @@ const EditProfileScreen = () => {
     if (!user) return;
 
     setLoading(true);
+    console.log('Starting profile update...');
+    
     try {
       // Update display name
       if (displayName !== user.displayName) {
-        await user.updateProfile({
+        console.log('Updating display name...');
+        await auth().currentUser?.updateProfile({
           displayName: displayName.trim(),
         });
       }
 
       // Update profile photo
       if (profileImage !== user.photoURL) {
-        await user.updateProfile({
+        console.log('Updating profile photo...');
+        await auth().currentUser?.updateProfile({
           photoURL: profileImage,
         });
       }
 
+      console.log('Profile updated successfully, refreshing user data...');
+      
+      // Refresh both contexts to ensure immediate reflection
+      try {
+        await refreshUser();
+        console.log('Auth user refreshed');
+      } catch (refreshError) {
+        console.warn('Error refreshing auth user:', refreshError);
+      }
+      
+      try {
+        if (userContext?.refreshUserData) {
+          await userContext.refreshUserData();
+          console.log('User context refreshed');
+        }
+      } catch (refreshError) {
+        console.warn('Error refreshing user data:', refreshError);
+      }
+
+      // Success - profile has been updated
+      setLoading(false);
+      console.log('Profile update completed successfully');
+      
       // Note: Email updates require re-authentication in Firebase
       if (email !== user.email) {
         Alert.alert(
@@ -132,15 +231,26 @@ const EditProfileScreen = () => {
           [{ text: 'OK' }]
         );
       } else {
-        Alert.alert('Success', 'Profile updated successfully!', [
-          { text: 'OK', onPress: () => router.back() }
-        ]);
+        // Show success message and navigate back
+        Alert.alert(
+          'Success', 
+          'Profile updated successfully!',
+          [
+            { 
+              text: 'OK',
+              onPress: () => {
+                // Navigate to account tab after success
+                router.push('/account');
+              }
+            }
+          ]
+        );
       }
     } catch (error: any) {
       console.error('Profile update error:', error);
+      setLoading(false);
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
-    setLoading(false);
   };
 
   if (!user) {
@@ -165,7 +275,11 @@ const EditProfileScreen = () => {
           <View style={styles.photoSection}>
             <View style={styles.photoContainer}>
               {profileImage ? (
-                <Image source={{ uri: profileImage }} style={styles.profilePhoto} />
+                <Image 
+                  key={profileImage}
+                  source={{ uri: profileImage }} 
+                  style={styles.profilePhoto} 
+                />
               ) : (
                 <View style={styles.photoPlaceholder}>
                   <Ionicons name="person" size={50} color={AppColors.primary} />
