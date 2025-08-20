@@ -36,18 +36,8 @@ export const fallbackCoursesData: Course[] = [
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
-    description: 'Master the basics of financial planning, budgeting, and wealth building. This comprehensive course covers everything you need to start your journey to financial independence.',
+    description: "Master the basics of financial planning, budgeting, and wealth building. This comprehensive course covers everything you need to start your journey to financial independence.",
     image: '📚',
-    curriculum: [
-      'Introduction to Financial Freedom',
-      'Understanding Money Mindset',
-      'Budgeting Strategies',
-      'Debt Management',
-      'Investment Basics',
-      'Creating Multiple Income Streams',
-      'Tax Planning Essentials',
-      'Building Your Financial Future'
-    ],
     benefits: [
       'Lifetime access to course materials',
       'Weekly live Q&A sessions',
@@ -72,16 +62,6 @@ export const fallbackCoursesData: Course[] = [
     updatedAt: new Date(),
     description: 'Learn professional trading strategies for stocks, forex, and cryptocurrency. Get real-time trade alerts and copy our proven strategies.',
     image: '📈',
-    curriculum: [
-      'Trading Psychology',
-      'Technical Analysis Deep Dive',
-      'Fundamental Analysis',
-      'Risk Management Strategies',
-      'Forex Trading Mastery',
-      'Cryptocurrency Trading',
-      'Options Trading Basics',
-      'Building Your Trading Plan'
-    ],
     benefits: [
       'Daily trade signals',
       'Copy-and-paste trade system',
@@ -106,16 +86,6 @@ export const fallbackCoursesData: Course[] = [
     updatedAt: new Date(),
     description: 'The ultimate program to achieve complete financial independence. Learn how to create your own banking system and build generational wealth.',
     image: '🏦',
-    curriculum: [
-      'Infinite Banking Concept',
-      'Creating Your Banking System',
-      'Advanced Investment Strategies',
-      'Real Estate Investment',
-      'Business Development',
-      'Asset Protection',
-      'Legacy Planning',
-      'Wealth Preservation'
-    ],
     benefits: [
       'Personal financial advisor access',
       'Done-for-you templates',
@@ -140,16 +110,6 @@ export const fallbackCoursesData: Course[] = [
     updatedAt: new Date(),
     description: 'Turn your business idea into reality. Learn proven strategies to start, grow, and scale your business while maintaining financial stability.',
     image: '🚀',
-    curriculum: [
-      'Business Ideation',
-      'Market Research & Validation',
-      'Business Planning',
-      'Funding Your Business',
-      'Marketing & Sales',
-      'Operations Management',
-      'Scaling Strategies',
-      'Exit Planning'
-    ],
     benefits: [
       'Business plan templates',
       'Funding resources',
@@ -174,16 +134,6 @@ export const fallbackCoursesData: Course[] = [
     updatedAt: new Date(),
     description: 'Understand and implement comprehensive financial protection strategies. Learn how to safeguard your wealth and family\'s future.',
     image: '🛡️',
-    curriculum: [
-      'Insurance Fundamentals',
-      'Life Insurance Strategies',
-      'Health & Disability Coverage',
-      'Property Protection',
-      'Liability Management',
-      'Estate Planning Basics',
-      'Trust Structures',
-      'Legacy Protection'
-    ],
     benefits: [
       'Personal coverage analysis',
       'Insurance comparison tools',
@@ -208,16 +158,6 @@ export const fallbackCoursesData: Course[] = [
     updatedAt: new Date(),
     description: 'Build wealth through strategic real estate investments. Learn how to find, fund, and flip properties or build a rental portfolio.',
     image: '🏠',
-    curriculum: [
-      'Real Estate Market Analysis',
-      'Finding Investment Properties',
-      'Financing Strategies',
-      'Property Management',
-      'Fix & Flip Techniques',
-      'Rental Property Success',
-      'Commercial Real Estate',
-      'REITs and Syndications'
-    ],
     benefits: [
       'Property analysis tools',
       'Financing connections',
@@ -327,7 +267,7 @@ const CoursesScreen: React.FC<CoursesScreenProps> = ({ embedded = false }) => {
                 </View>
                 <View style={styles.statItem}>
                   <Ionicons name="people" size={16} color={AppColors.text.secondary} />
-                  <Text style={styles.statText}>{course.studentsCount || course.students || 0}</Text>
+                  <Text style={styles.statText}>{course.students || 0}</Text>
                 </View>
               </View>
               

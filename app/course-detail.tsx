@@ -60,7 +60,7 @@ const CourseDetailScreen = () => {
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
-            oldCurriculum: fallbackCourse.curriculum || [],
+            oldCurriculum: [],
             modules: fallbackCourse.modules || [],
           });
         }
@@ -77,7 +77,7 @@ const CourseDetailScreen = () => {
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date(),
-          oldCurriculum: fallbackCourse.curriculum || [],
+          oldCurriculum: [],
           modules: fallbackCourse.modules || [],
         });
       }
@@ -237,36 +237,26 @@ const CourseDetailScreen = () => {
           <Text style={styles.description}>{course.description}</Text>
         </View>
 
+        {/* Learning Objectives */}
+        {course.objectives && course.objectives.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🎯 Learning Objectives</Text>
+            {course.objectives.map((objective, index) => (
+              <View key={index} style={styles.objectiveItem}>
+                <Ionicons name="checkmark-circle" size={20} color={AppColors.primary} />
+                <Text style={styles.objectiveText}>{objective}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Course Curriculum */}
         {course.curriculum && course.curriculum.modules ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📚 {course.curriculum.title || 'Course Curriculum'}</Text>
+            <Text style={styles.sectionTitle}>Course Modules</Text>
             
-            {/* Curriculum Description */}
-            {course.curriculum.description && (
-              <Text style={styles.curriculumDescription}>{course.curriculum.description}</Text>
-            )}
             
-            {/* Learning Objectives */}
-            {course.curriculum.objectives && course.curriculum.objectives.length > 0 && (
-              <View style={styles.objectivesSection}>
-                <Text style={styles.objectivesTitle}>🎯 Learning Objectives</Text>
-                {(course.curriculum.objectives || []).map((objective, index) => (
-                  <View key={index} style={styles.objectiveItem}>
-                    <Ionicons name="checkmark-circle" size={16} color={AppColors.primary} />
-                    <Text style={styles.objectiveText}>{objective}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
             
-            {/* Course Duration */}
-            {course.curriculum.totalDuration && (
-              <View style={styles.durationSection}>
-                <Ionicons name="time" size={20} color={AppColors.primary} />
-                <Text style={styles.durationText}>Total Duration: {course.curriculum.totalDuration}</Text>
-              </View>
-            )}
             
             {/* Course Modules */}
             <Text style={styles.modulesTitle}>📋 Course Modules</Text>
@@ -305,7 +295,7 @@ const CourseDetailScreen = () => {
                             content.type === 'audio' ? 'musical-notes' :
                             content.type === 'pdf' ? 'document' : 'text'
                           } 
-                          size={16} 
+                          size={24} 
                           color={(content.isLocked || module.isLocked) && !isEnrolled ? AppColors.text.secondary : AppColors.primary} 
                         />
                       </View>
@@ -361,7 +351,7 @@ const CourseDetailScreen = () => {
                             content.type === 'audio' ? 'musical-notes' :
                             content.type === 'pdf' ? 'document' : 'text'
                           } 
-                          size={16} 
+                          size={24} 
                           color={content.isLocked && !isEnrolled ? AppColors.text.secondary : AppColors.primary} 
                         />
                       </View>

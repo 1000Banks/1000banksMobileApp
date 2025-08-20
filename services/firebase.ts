@@ -49,6 +49,7 @@ export interface Course {
   description: string;
   price: string;
   image: string;
+  objectives?: string[];
   curriculum?: CourseCurriculum; // New structured curriculum
   oldCurriculum?: string[]; // Keep for backward compatibility
   modules?: CourseModule[]; // Keep for backward compatibility
@@ -173,7 +174,7 @@ class FirebaseService {
     );
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data(),
     })) as Course[];
@@ -192,7 +193,7 @@ class FirebaseService {
     );
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data(),
     })) as Product[];
@@ -277,7 +278,7 @@ class FirebaseService {
     );
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data(),
     })) as UserPurchase[];
@@ -318,7 +319,7 @@ class FirebaseService {
     );
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => doc.data()) as UserCourseEnrollment[];
+    return snapshot.docs.map((doc: any) => doc.data()) as UserCourseEnrollment[];
   }
 
   async updateCourseProgress(courseId: string, progress: number): Promise<void> {
@@ -460,7 +461,7 @@ class FirebaseService {
     if (!isAdmin) throw new Error('Unauthorized: Admin access required');
 
     const snapshot = await getDocs(collection(this.db, this.productsCollection));
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data(),
     })) as Product[];
@@ -513,7 +514,7 @@ class FirebaseService {
     if (!isAdmin) throw new Error('Unauthorized: Admin access required');
 
     const snapshot = await getDocs(collection(this.db, this.coursesCollection));
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data(),
     })) as Course[];

@@ -33,6 +33,7 @@ const AdminCourses = () => {
     price: '',
     image: '📚',
     imageUrl: '',
+    objectives: [''],
     curriculum: {
       id: '',
       title: '',
@@ -97,6 +98,7 @@ const AdminCourses = () => {
       price: '',
       image: '📚',
       imageUrl: '',
+      objectives: [''],
       curriculum: {
         id: `curriculum_${Date.now()}`,
         title: '',
@@ -175,6 +177,7 @@ const AdminCourses = () => {
       price: course.price,
       image: course.image || '📚',
       imageUrl: '',
+      objectives: course.objectives || [''],
       curriculum: curriculumData,
       duration: course.duration,
       level: course.level,
@@ -256,6 +259,7 @@ const AdminCourses = () => {
         description: courseForm.description,
         price: courseForm.price,
         image: courseForm.image,
+        objectives: courseForm.objectives.filter(obj => obj.trim() !== ''),
         curriculum: curriculumData,
         duration: courseForm.duration,
         level: courseForm.level,
@@ -354,25 +358,19 @@ const AdminCourses = () => {
     );
   };
 
-  const addCurriculumObjective = () => {
-    const curriculum = { ...courseForm.curriculum };
-    curriculum.objectives = [...(curriculum.objectives ?? []), ''];
-    setCourseForm({ ...courseForm, curriculum });
+  const addObjective = () => {
+    setCourseForm({ ...courseForm, objectives: [...courseForm.objectives, ''] });
   };
 
-  const updateCurriculumObjective = (index: number, value: string) => {
-    const curriculum = { ...courseForm.curriculum };
-    if (!curriculum.objectives) {
-      curriculum.objectives = [];
-    }
-    curriculum.objectives[index] = value;
-    setCourseForm({ ...courseForm, curriculum });
+  const updateObjective = (index: number, value: string) => {
+    const objectives = [...courseForm.objectives];
+    objectives[index] = value;
+    setCourseForm({ ...courseForm, objectives });
   };
 
-  const removeCurriculumObjective = (index: number) => {
-    const curriculum = { ...courseForm.curriculum };
-    curriculum.objectives = (curriculum.objectives ?? []).filter((_, i) => i !== index);
-    setCourseForm({ ...courseForm, curriculum });
+  const removeObjective = (index: number) => {
+    const objectives = courseForm.objectives.filter((_, i) => i !== index);
+    setCourseForm({ ...courseForm, objectives });
   };
 
   // Module management functions
@@ -890,81 +888,32 @@ const AdminCourses = () => {
                 </View>
               </View>
 
-              {/* Curriculum Information */}
+              {/* Learning Objectives */}
               <View style={styles.inputGroup}>
-                <Text style={styles.sectionTitle}>📚 Curriculum Information</Text>
-                
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Curriculum Title</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={courseForm.curriculum.title}
-                    onChangeText={(text) => setCourseForm({ 
-                      ...courseForm, 
-                      curriculum: { ...courseForm.curriculum, title: text }
-                    })}
-                    placeholder="e.g., Complete Trading Mastery Program"
-                    placeholderTextColor={AppColors.text.secondary}
-                  />
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.inputLabel}>Learning Objectives</Text>
+                  <TouchableOpacity onPress={addObjective}>
+                    <Ionicons name="add-circle" size={24} color={AppColors.primary} />
+                  </TouchableOpacity>
                 </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Curriculum Description</Text>
-                  <TextInput
-                    style={[styles.input, styles.textArea]}
-                    value={courseForm.curriculum.description}
-                    onChangeText={(text) => setCourseForm({ 
-                      ...courseForm, 
-                      curriculum: { ...courseForm.curriculum, description: text }
-                    })}
-                    placeholder="Describe the overall curriculum goals and structure"
-                    placeholderTextColor={AppColors.text.secondary}
-                    multiline
-                    numberOfLines={3}
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Total Duration</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={courseForm.curriculum.totalDuration}
-                    onChangeText={(text) => setCourseForm({ 
-                      ...courseForm, 
-                      curriculum: { ...courseForm.curriculum, totalDuration: text }
-                    })}
-                    placeholder="e.g., 12 weeks, 40 hours"
-                    placeholderTextColor={AppColors.text.secondary}
-                  />
-                </View>
-
-                {/* Learning Objectives */}
-                <View style={styles.inputGroup}>
-                  <View style={styles.sectionHeader}>
-                    <Text style={styles.inputLabel}>Learning Objectives</Text>
-                    <TouchableOpacity onPress={addCurriculumObjective}>
-                      <Ionicons name="add-circle" size={24} color={AppColors.primary} />
+                {courseForm.objectives.map((objective, index) => (
+                  <View key={index} style={styles.curriculumRow}>
+                    <Text style={styles.curriculumNumber}>{index + 1}.</Text>
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      value={objective}
+                      onChangeText={(text) => updateObjective(index, text)}
+                      placeholder="Learning objective"
+                      placeholderTextColor={AppColors.text.secondary}
+                    />
+                    <TouchableOpacity
+                      onPress={() => removeObjective(index)}
+                      style={styles.removeButton}
+                    >
+                      <Ionicons name="close-circle" size={24} color="#EF4444" />
                     </TouchableOpacity>
                   </View>
-                  {(courseForm.curriculum.objectives ?? []).map((objective, index) => (
-                    <View key={index} style={styles.curriculumRow}>
-                      <Text style={styles.curriculumNumber}>{index + 1}.</Text>
-                      <TextInput
-                        style={[styles.input, { flex: 1 }]}
-                        value={objective}
-                        onChangeText={(text) => updateCurriculumObjective(index, text)}
-                        placeholder="Learning objective"
-                        placeholderTextColor={AppColors.text.secondary}
-                      />
-                      <TouchableOpacity
-                        onPress={() => removeCurriculumObjective(index)}
-                        style={styles.removeButton}
-                      >
-                        <Ionicons name="close-circle" size={24} color="#EF4444" />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </View>
+                ))}
               </View>
 
               {/* Course Modules */}
@@ -1010,7 +959,7 @@ const AdminCourses = () => {
                                 content.type === 'audio' ? 'musical-notes' :
                                 content.type === 'pdf' ? 'document' : 'text'
                               } 
-                              size={16} 
+                              size={24} 
                               color={AppColors.text.secondary} 
                             />
                           </View>
