@@ -1,5 +1,5 @@
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, where } from '@react-native-firebase/firestore';
-import { httpsCallable } from '@react-native-firebase/functions';
+// import { httpsCallable } from '@react-native-firebase/functions'; // Commented until Firebase Functions is set up
 import firebaseService from './firebase';
 
 const db = firebaseService.db;
@@ -29,7 +29,7 @@ export interface ChannelSubscription {
 export class TelegramProxyService {
   private static instance: TelegramProxyService;
   private pollingIntervals: Map<string, NodeJS.Timeout | number> = new Map();
-  private telegramProxy = httpsCallable(firebaseService.functions, 'telegramProxy');
+  // private telegramProxy = httpsCallable(firebaseService.functions, 'telegramProxy'); // Commented until setup
 
   private constructor() {}
 
@@ -42,24 +42,8 @@ export class TelegramProxyService {
 
   // Proxy method to call Telegram API through Firebase Functions
   private async callTelegramAPI(endpoint: string, botToken: string): Promise<any> {
-    try {
-      console.log(`🌐 Calling Telegram API via proxy: ${endpoint}`);
-
-      const result = await this.telegramProxy({
-        method: 'GET',
-        endpoint: endpoint,
-        botToken: botToken
-      });
-
-      if (result.data.success && result.data.data.ok) {
-        return result.data.data;
-      } else {
-        throw new Error(result.data.data.description || 'Telegram API error');
-      }
-    } catch (error) {
-      console.error('Telegram proxy error:', error);
-      throw error;
-    }
+    // Placeholder until Firebase Functions is set up
+    throw new Error('Firebase Functions not available yet. Please upgrade to Blaze plan to enable proxy service.');
   }
 
   async verifyBotToken(botToken: string): Promise<any> {

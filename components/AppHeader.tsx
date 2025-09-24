@@ -23,14 +23,23 @@ interface AppHeaderProps {
   showMenuAndCart?: boolean;
 }
 
-const AppHeader: React.FC<AppHeaderProps> = ({ 
-  title, 
-  showBackButton = true, 
+const AppHeader: React.FC<AppHeaderProps> = ({
+  title,
+  showBackButton = true,
   rightComponent,
   showMenuAndCart = false
 }) => {
   const router = useRouter();
-  const { getCartCount } = useCart();
+
+  // Safe cart access with fallback
+  let cartCount = 0;
+  try {
+    const { getCartCount } = useCart();
+    cartCount = getCartCount();
+  } catch (error) {
+    console.warn('CartProvider not available, using default cart count');
+  }
+
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -73,9 +82,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               onPress={() => router.push('/checkout')}
             >
               <Ionicons name="cart-outline" size={24} color={AppColors.text.primary} />
-              {getCartCount() > 0 && (
+              {cartCount > 0 && (
                 <View style={styles.cartBadge}>
-                  <Text style={styles.cartBadgeText}>{getCartCount()}</Text>
+                  <Text style={styles.cartBadgeText}>{cartCount}</Text>
                 </View>
               )}
             </TouchableOpacity>

@@ -30,6 +30,12 @@ export default function RootLayout() {
             <Stack.Screen name="notification-center" />
             <Stack.Screen name="privacy-security" />
             <Stack.Screen name="help-support" />
+            <Stack.Screen name="admin-dashboard" />
+            <Stack.Screen name="admin-signals" />
+            <Stack.Screen name="admin-settings" />
+            <Stack.Screen name="notifications" />
+            <Stack.Screen name="payment-methods" />
+            <Stack.Screen name="product-detail" />
             <Stack.Screen name="+not-found" />
           </Stack>
         </CartProvider>

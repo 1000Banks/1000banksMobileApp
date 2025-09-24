@@ -17,7 +17,7 @@ import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import firebaseService from '@/services/firebase';
 import { telegramService } from '@/services/telegram';
-import { telegramProxyService } from '@/services/telegram-proxy';
+// import { telegramProxyService } from '@/services/telegram-proxy'; // Temporarily disabled
 
 interface AppSettings {
   general: {
@@ -156,8 +156,8 @@ const AdminSettingsScreen = () => {
       
       // Handle Telegram settings
       if (activeSection === 'telegram' && settings.telegram.enabled) {
-        // Use proxy service if enabled, otherwise use direct service
-        const service = settings.telegram.useProxy ? telegramProxyService : telegramService;
+        // For now, always use direct service (proxy disabled until Firebase Functions setup)
+        const service = telegramService;
 
         const result = await service.saveTelegramSettings({
           name: settings.telegram.channelName,

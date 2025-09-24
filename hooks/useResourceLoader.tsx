@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Asset } from 'expo-asset';
 import { Image } from 'react-native';
-import { Video } from 'expo-av';
 
 interface ResourceLoaderState {
   progress: number;

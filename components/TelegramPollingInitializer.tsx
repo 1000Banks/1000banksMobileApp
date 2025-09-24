@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { telegramService } from '@/services/telegram';
-import { telegramProxyService } from '@/services/telegram-proxy';
+// import { telegramProxyService } from '@/services/telegram-proxy'; // Temporarily disabled
 import firebaseService from '@/services/firebase';
 
 export default function TelegramPollingInitializer() {
@@ -23,8 +23,9 @@ export default function TelegramPollingInitializer() {
           console.log('Could not check admin settings, defaulting to proxy mode');
         }
 
-        const service = useProxy ? telegramProxyService : telegramService;
-        console.log(`🌐 Using ${useProxy ? 'PROXY' : 'DIRECT'} mode for Telegram API`);
+        // For now, always use direct service (proxy disabled until Firebase Functions setup)
+        const service = telegramService;
+        console.log(`🌐 Using DIRECT mode for Telegram API (proxy temporarily disabled)`);
 
         await service.initializeActiveChannels();
       } catch (error) {
@@ -38,7 +39,7 @@ export default function TelegramPollingInitializer() {
     return () => {
       console.log('🛑 Stopping Telegram polling...');
       telegramService.stopAllPolling();
-      telegramProxyService.stopAllPolling();
+      // telegramProxyService.stopAllPolling(); // Disabled
     };
   }, []);
 

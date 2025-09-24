@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 // import MaskedView from '@react-native-masked-view/masked-view';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Video, ResizeMode } from 'expo-av';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import {
   Dimensions,
   FlatList,
@@ -31,8 +31,13 @@ export default function HomeScreen() {
   const [isVideoVisible, setIsVideoVisible] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const { cartItems, addToCart, getCartCount } = useCart();
-  const videoRef = useRef<Video>(null);
   const videoContainerRef = useRef<View>(null);
+
+  // Create video player instance
+  const player = useVideoPlayer(require('@/assets/images/Final_Funds_Vision_Book.mp4'), player => {
+    player.loop = true;
+    player.muted = false;
+  });
   const scrollViewRef = useRef<ScrollView>(null);
   const { progress, isLoading, loadingText } = useResourceLoader();
   const { showSplash, hideSplash } = useSplashScreen();
@@ -82,11 +87,11 @@ export default function HomeScreen() {
       setIsVideoVisible(isVisible);
       
       // Auto-play/pause video based on visibility
-      if (videoRef.current) {
+      if (player) {
         if (isVisible) {
-          videoRef.current.playAsync();
+          player.play();
         } else {
-          videoRef.current.pauseAsync();
+          player.pause();
         }
       }
     }
@@ -140,19 +145,18 @@ export default function HomeScreen() {
               <Text style={{ fontSize: 14, color: AppColors.text.secondary, marginTop: 4 }}>Video Unavailable</Text>
             </View>
           ) : (
-            <Video
-              ref={videoRef}
-              source={require('@/assets/images/Final_Funds_Vision_Book.mp4')}
+            <VideoView
               style={styles.video}
-              resizeMode={ResizeMode.CONTAIN}
-              isLooping
-              shouldPlay={isVideoVisible}
-              useNativeControls
+              player={player}
+              allowsFullscreen
+              allowsPictureInPicture
+              contentFit="contain"
+              onLoadStart={() => console.log('Video loading...')}
+              onLoad={() => console.log('Video loaded successfully')}
               onError={(error) => {
                 console.warn('Video error:', error);
                 setVideoError(true);
               }}
-              onLoad={() => console.log('Video loaded successfully')}
             />
           )}
         </View>
