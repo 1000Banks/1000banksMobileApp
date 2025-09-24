@@ -17,6 +17,7 @@ import { AppColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import firebaseService from '@/services/firebase';
 import { telegramService } from '@/services/telegram';
+import { telegramProxyService } from '@/services/telegram-proxy';
 
 interface AppSettings {
   general: {
@@ -53,6 +54,7 @@ interface AppSettings {
   };
   telegram: {
     enabled: boolean;
+    useProxy: boolean;
     channelName: string;
     chatId: string;
     botToken: string;
@@ -106,6 +108,7 @@ const AdminSettingsScreen = () => {
     },
     telegram: {
       enabled: false,
+      useProxy: true, // Default to proxy for regions with restrictions
       channelName: '',
       chatId: '',
       botToken: '',
@@ -153,7 +156,10 @@ const AdminSettingsScreen = () => {
       
       // Handle Telegram settings
       if (activeSection === 'telegram' && settings.telegram.enabled) {
-        const result = await telegramService.saveTelegramSettings({
+        // Use proxy service if enabled, otherwise use direct service
+        const service = settings.telegram.useProxy ? telegramProxyService : telegramService;
+
+        const result = await service.saveTelegramSettings({
           name: settings.telegram.channelName,
           chatId: settings.telegram.chatId,
           botToken: settings.telegram.botToken,
@@ -530,6 +536,13 @@ const AdminSettingsScreen = () => {
                 settings.telegram.enabled,
                 (value) => updateSetting('telegram', 'enabled', value),
                 'Connect a Telegram channel for trading signals'
+              )}
+
+              {renderSettingItem(
+                'Use Proxy Service (for restricted regions)',
+                settings.telegram.useProxy,
+                (value) => updateSetting('telegram', 'useProxy', value),
+                'Route Telegram API calls through Firebase Functions (recommended for Pakistan/restricted regions)'
               )}
               
               {settings.telegram.enabled && (
