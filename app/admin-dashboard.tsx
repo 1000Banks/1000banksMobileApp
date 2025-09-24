@@ -125,6 +125,13 @@ const AdminDashboard = () => {
       color: '#06B6D4',
     },
     {
+      title: 'Trading Signals',
+      icon: 'notifications',
+      description: 'Send trading signals to subscribers',
+      onPress: () => router.push('/admin-signals'),
+      color: '#FF6B6B',
+    },
+    {
       title: 'Analytics',
       icon: 'analytics',
       description: 'View sales and engagement metrics',

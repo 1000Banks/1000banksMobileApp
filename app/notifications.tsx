@@ -26,6 +26,8 @@ interface Notification {
   read: boolean;
   type: 'trading' | 'order' | 'system';
   channelId?: string;
+  signalType?: 'bullish' | 'bearish' | 'neutral' | 'alert' | 'custom';
+  templateId?: string;
 }
 
 export default function NotificationsScreen() {
@@ -106,8 +108,27 @@ export default function NotificationsScreen() {
     }
   };
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
+  const getNotificationIcon = (notification: Notification) => {
+    // Check for signal types first
+    if (notification.signalType) {
+      switch (notification.signalType) {
+        case 'bullish':
+          return 'trending-up';
+        case 'bearish':
+          return 'trending-down';
+        case 'alert':
+          return 'warning';
+        case 'neutral':
+          return 'information-circle';
+        case 'custom':
+          return 'megaphone';
+        default:
+          return 'trending-up-outline';
+      }
+    }
+
+    // Fallback to type-based icons
+    switch (notification.type) {
       case 'trading':
         return 'trending-up-outline';
       case 'order':
@@ -117,6 +138,26 @@ export default function NotificationsScreen() {
       default:
         return 'notifications-outline';
     }
+  };
+
+  const getNotificationColor = (notification: Notification) => {
+    if (notification.signalType) {
+      switch (notification.signalType) {
+        case 'bullish':
+          return '#4CAF50';
+        case 'bearish':
+          return '#F44336';
+        case 'alert':
+          return '#FF9800';
+        case 'neutral':
+          return '#2196F3';
+        case 'custom':
+          return '#9C27B0';
+        default:
+          return AppColors.primary;
+      }
+    }
+    return notification.read ? AppColors.text.secondary : AppColors.primary;
   };
 
   const formatTimestamp = (timestamp: Timestamp) => {
@@ -197,11 +238,18 @@ export default function NotificationsScreen() {
               ]}
               onPress={() => handleNotificationPress(notification)}
             >
-              <View style={styles.notificationIcon}>
+              <View style={[
+                styles.notificationIcon,
+                notification.signalType && {
+                  backgroundColor: getNotificationColor(notification) + '20',
+                  borderRadius: 20,
+                  padding: 4
+                }
+              ]}>
                 <Ionicons
-                  name={getNotificationIcon(notification.type)}
+                  name={getNotificationIcon(notification)}
                   size={24}
-                  color={notification.read ? AppColors.text.secondary : AppColors.primary}
+                  color={getNotificationColor(notification)}
                 />
               </View>
               
