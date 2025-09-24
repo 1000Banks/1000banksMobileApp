@@ -102,6 +102,7 @@ const AdminSignalsScreen = () => {
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [showCustomModal, setShowCustomModal] = useState(false);
+  const [showQuickSignalModal, setShowQuickSignalModal] = useState(false);
   const [customSignal, setCustomSignal] = useState({
     title: '',
     message: '',
@@ -109,13 +110,27 @@ const AdminSignalsScreen = () => {
     price: '',
     target: '',
     stopLoss: '',
+    saveAsTemplate: false,
+  });
+  const [quickSignalData, setQuickSignalData] = useState({
+    coin: 'BTC/USDT',
+    description: '',
   });
   const [selectedTemplate, setSelectedTemplate] = useState<SignalTemplate | null>(null);
+  const [customTemplates, setCustomTemplates] = useState<SignalTemplate[]>([]);
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [allTemplates, setAllTemplates] = useState<SignalTemplate[]>([]);
 
   useEffect(() => {
     checkAdminAccess();
     loadSubscribers();
+    loadCustomTemplates();
   }, []);
+
+  useEffect(() => {
+    // Combine predefined and custom templates
+    setAllTemplates([...signalTemplates, ...customTemplates]);
+  }, [customTemplates]);
 
   const checkAdminAccess = async () => {
     try {
@@ -125,6 +140,57 @@ const AdminSignalsScreen = () => {
       }
     } catch (error) {
       router.replace('/');
+    }
+  };
+
+  const loadCustomTemplates = async () => {
+    try {
+      const templatesQuery = query(
+        collection(db, 'signalTemplates'),
+        where('createdBy', '==', firebaseService.getCurrentUser()?.uid)
+      );
+      const snapshot = await getDocs(templatesQuery);
+
+      const templates: SignalTemplate[] = [];
+      snapshot.forEach((doc) => {
+        templates.push({
+          id: doc.id,
+          ...doc.data() as Omit<SignalTemplate, 'id'>
+        });
+      });
+
+      setCustomTemplates(templates);
+    } catch (error) {
+      console.error('Error loading custom templates:', error);
+    }
+  };
+
+  const saveCustomTemplate = async (template: Omit<SignalTemplate, 'id'>) => {
+    try {
+      const docRef = await addDoc(collection(db, 'signalTemplates'), {
+        ...template,
+        createdBy: firebaseService.getCurrentUser()?.uid,
+        createdAt: serverTimestamp(),
+      });
+
+      const newTemplate = { id: docRef.id, ...template };
+      setCustomTemplates(prev => [...prev, newTemplate]);
+
+      return { success: true, id: docRef.id };
+    } catch (error) {
+      console.error('Error saving template:', error);
+      return { success: false, error };
+    }
+  };
+
+  const deleteCustomTemplate = async (templateId: string) => {
+    try {
+      await firebaseService.deleteDocument('signalTemplates', templateId);
+      setCustomTemplates(prev => prev.filter(t => t.id !== templateId));
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      return { success: false, error };
     }
   };
 
@@ -227,18 +293,35 @@ const AdminSignalsScreen = () => {
   };
 
   const handleQuickSignal = (template: SignalTemplate) => {
-    Alert.alert(
-      'Send Signal',
-      `Send "${template.title}" to ${subscriberCount} subscriber${subscriberCount !== 1 ? 's' : ''}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Send',
-          onPress: () => sendSignal(template),
-          style: 'default'
-        }
-      ]
-    );
+    setSelectedTemplate(template);
+    setQuickSignalData({ coin: 'BTC/USDT', description: '' });
+    setShowQuickSignalModal(true);
+  };
+
+  const sendQuickSignal = async () => {
+    if (!selectedTemplate || !quickSignalData.coin.trim()) {
+      Alert.alert('Error', 'Please enter coin pair.');
+      return;
+    }
+
+    // Create enhanced message with coin and description
+    let enhancedMessage = selectedTemplate.message;
+
+    // Add coin information
+    enhancedMessage += `\n\n💱 COIN: ${quickSignalData.coin}`;
+
+    // Add description if provided
+    if (quickSignalData.description.trim()) {
+      enhancedMessage += `\n📋 NOTE: ${quickSignalData.description}`;
+    }
+
+    const enhancedTemplate = {
+      ...selectedTemplate,
+      message: enhancedMessage
+    };
+
+    await sendSignal(enhancedTemplate, enhancedMessage);
+    setShowQuickSignalModal(false);
   };
 
   const handleCustomSignal = () => {
@@ -264,13 +347,23 @@ const AdminSignalsScreen = () => {
     }
 
     const customTemplate: SignalTemplate = {
-      id: 'custom',
+      id: customSignal.saveAsTemplate ? `custom_${Date.now()}` : 'custom',
       title: customSignal.title,
       icon: 'megaphone',
       color: '#673AB7',
       message: detailedMessage,
       type: 'custom'
     };
+
+    // Save as template if requested
+    if (customSignal.saveAsTemplate) {
+      const result = await saveCustomTemplate(customTemplate);
+      if (result.success) {
+        Alert.alert('Success', 'Template saved and signal sent!');
+      } else {
+        Alert.alert('Warning', 'Signal sent but failed to save template.');
+      }
+    }
 
     await sendSignal(customTemplate, detailedMessage);
     setShowCustomModal(false);
@@ -283,7 +376,30 @@ const AdminSignalsScreen = () => {
       price: '',
       target: '',
       stopLoss: '',
+      saveAsTemplate: false,
     });
+  };
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    Alert.alert(
+      'Delete Template',
+      'Are you sure you want to delete this custom template?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await deleteCustomTemplate(templateId);
+            if (result.success) {
+              Alert.alert('Success', 'Template deleted successfully.');
+            } else {
+              Alert.alert('Error', 'Failed to delete template.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   if (loading) {
@@ -310,9 +426,17 @@ const AdminSignalsScreen = () => {
           <Ionicons name="arrow-back" size={24} color={AppColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Trading Signals</Text>
-        <TouchableOpacity onPress={loadSubscribers}>
-          <Ionicons name="refresh" size={24} color={AppColors.text.primary} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => setDeleteMode(!deleteMode)}
+            style={[styles.headerButton, deleteMode && styles.deleteActive]}
+          >
+            <Ionicons name="trash-outline" size={24} color={deleteMode ? AppColors.error : AppColors.text.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={loadSubscribers}>
+            <Ionicons name="refresh" size={24} color={AppColors.text.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -337,19 +461,32 @@ const AdminSignalsScreen = () => {
           <Text style={styles.sectionSubtitle}>Tap to send pre-configured trading signals</Text>
 
           <View style={styles.signalGrid}>
-            {signalTemplates.map((template) => (
-              <TouchableOpacity
-                key={template.id}
-                style={[styles.signalCard, { borderColor: template.color + '40' }]}
-                onPress={() => handleQuickSignal(template)}
-                disabled={sending}
-              >
-                <View style={[styles.signalIcon, { backgroundColor: template.color + '20' }]}>
-                  <Ionicons name={template.icon} size={24} color={template.color} />
-                </View>
-                <Text style={styles.signalTitle}>{template.title}</Text>
-              </TouchableOpacity>
-            ))}
+            {allTemplates.map((template) => {
+              const isCustom = customTemplates.some(ct => ct.id === template.id);
+              return (
+                <TouchableOpacity
+                  key={template.id}
+                  style={[styles.signalCard, { borderColor: template.color + '40' }]}
+                  onPress={() => deleteMode && isCustom ? handleDeleteTemplate(template.id) : handleQuickSignal(template)}
+                  disabled={sending}
+                >
+                  <View style={[styles.signalIcon, { backgroundColor: template.color + '20' }]}>
+                    <Ionicons name={template.icon} size={24} color={template.color} />
+                    {deleteMode && isCustom && (
+                      <View style={styles.deleteOverlay}>
+                        <Ionicons name="trash" size={16} color={AppColors.error} />
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.signalTitle}>{template.title}</Text>
+                  {isCustom && (
+                    <View style={styles.customBadge}>
+                      <Text style={styles.customBadgeText}>Custom</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
@@ -386,6 +523,79 @@ const AdminSignalsScreen = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Quick Signal Modal */}
+      <Modal
+        visible={showQuickSignalModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowQuickSignalModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {selectedTemplate?.title} - Quick Send
+              </Text>
+              <TouchableOpacity onPress={() => setShowQuickSignalModal(false)}>
+                <Ionicons name="close" size={24} color={AppColors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Coin/Pair *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., BTC/USDT, ETH/USDT"
+                placeholderTextColor={AppColors.text.secondary}
+                value={quickSignalData.coin}
+                onChangeText={(text) => setQuickSignalData({ ...quickSignalData, coin: text })}
+              />
+
+              <Text style={styles.inputLabel}>Additional Notes (Optional)</Text>
+              <TextInput
+                style={[styles.input, styles.messageInput]}
+                placeholder="Add any specific details..."
+                placeholderTextColor={AppColors.text.secondary}
+                value={quickSignalData.description}
+                onChangeText={(text) => setQuickSignalData({ ...quickSignalData, description: text })}
+                multiline
+                numberOfLines={3}
+              />
+
+              <View style={styles.previewContainer}>
+                <Text style={styles.previewLabel}>Preview:</Text>
+                <Text style={styles.previewText}>
+                  {selectedTemplate?.message}
+                  {quickSignalData.coin && `\n\n💱 COIN: ${quickSignalData.coin}`}
+                  {quickSignalData.description && `\n📋 NOTE: ${quickSignalData.description}`}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowQuickSignalModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.sendButton]}
+                onPress={sendQuickSignal}
+                disabled={sending}
+              >
+                {sending ? (
+                  <ActivityIndicator size="small" color={AppColors.background.dark} />
+                ) : (
+                  <Text style={styles.sendButtonText}>Send Signal</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Custom Signal Modal */}
       <Modal
@@ -475,6 +685,20 @@ const AdminSignalsScreen = () => {
                     keyboardType="numeric"
                   />
                 </View>
+              </View>
+
+              <View style={styles.checkboxContainer}>
+                <TouchableOpacity
+                  style={styles.checkbox}
+                  onPress={() => setCustomSignal({ ...customSignal, saveAsTemplate: !customSignal.saveAsTemplate })}
+                >
+                  <Ionicons
+                    name={customSignal.saveAsTemplate ? "checkbox" : "checkbox-outline"}
+                    size={24}
+                    color={customSignal.saveAsTemplate ? AppColors.primary : AppColors.text.secondary}
+                  />
+                  <Text style={styles.checkboxText}>Save as reusable template</Text>
+                </TouchableOpacity>
               </View>
             </ScrollView>
 
@@ -724,6 +948,72 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: AppColors.background.dark,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerButton: {
+    padding: 4,
+    borderRadius: 6,
+  },
+  deleteActive: {
+    backgroundColor: AppColors.error + '20',
+  },
+  deleteOverlay: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: AppColors.background.card,
+    borderRadius: 10,
+    padding: 2,
+  },
+  customBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: AppColors.primary,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  customBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: AppColors.background.dark,
+  },
+  previewContainer: {
+    backgroundColor: AppColors.background.default,
+    borderWidth: 1,
+    borderColor: AppColors.text.secondary + '20',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+  },
+  previewLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: AppColors.text.secondary,
+    marginBottom: 8,
+  },
+  previewText: {
+    fontSize: 14,
+    color: AppColors.text.primary,
+    lineHeight: 20,
+  },
+  checkboxContainer: {
+    marginTop: 16,
+  },
+  checkbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  checkboxText: {
+    fontSize: 14,
+    color: AppColors.text.primary,
+    marginLeft: 8,
   },
 });
 
