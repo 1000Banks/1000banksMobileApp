@@ -49,7 +49,8 @@ service cloud.firestore {
     }
     
     match /appSettings/{settingId} {
-      allow read, write, create: if isAdmin();
+      allow read: if true; // Public can read app settings
+      allow write, create: if isAdmin(); // Only admins can modify
     }
     
     // Public read access for courses and products

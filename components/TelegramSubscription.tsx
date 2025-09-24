@@ -31,28 +31,27 @@ export default function TelegramSubscription() {
     try {
       setLoading(true);
 
-      // Load app settings to get Telegram configuration - use public method
-      const telegramSettings = await firebaseService.getPublicTelegramSettings();
-      setSettings({ telegram: telegramSettings });
-
-      if (!telegramSettings?.enabled) {
-        setLoading(false);
-        return;
-      }
-
-      // Get active channels
+      // Get active channels directly from public telegramChannels collection
       const channels = await telegramService.getAllActiveChannels();
+
       if (channels.length > 0) {
-        setChannel(channels[0]);
-        
+        const activeChannel = channels[0];
+        setChannel(activeChannel);
+        setSettings({ telegram: { enabled: activeChannel.isActive } });
+
         // Check subscription status if user is logged in
         if (user) {
-          const subscribed = await telegramService.isUserSubscribed(user.uid, channels[0].id);
+          const subscribed = await telegramService.isUserSubscribed(user.uid, activeChannel.id);
           setIsSubscribed(subscribed);
         }
+      } else {
+        // No active channels found
+        setSettings({ telegram: { enabled: false } });
       }
     } catch (error) {
       console.error('Error loading channel data:', error);
+      // Fallback - assume no channels are available
+      setSettings({ telegram: { enabled: false } });
     } finally {
       setLoading(false);
     }

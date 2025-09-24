@@ -162,9 +162,19 @@ const AdminSettingsScreen = () => {
           subscriptionPrice: settings.telegram.subscriptionPrice,
           description: settings.telegram.channelDescription,
         });
-        
+
         if (!result.success) {
-          Alert.alert('Warning', 'Settings saved but Telegram integration failed to activate');
+          const errorMessage = typeof result.error === 'string'
+            ? result.error
+            : 'Failed to activate Telegram integration';
+          Alert.alert('Telegram Setup Error', errorMessage);
+          setSaving(false);
+          return;
+        } else {
+          // Update the chat ID with the verified one
+          if (result.channelId) {
+            settings.telegram.chatId = result.channelId;
+          }
         }
       }
       
@@ -544,6 +554,88 @@ const AdminSettingsScreen = () => {
                     (value) => updateSetting('telegram', 'botToken', value),
                     'default',
                     'Bot token from BotFather'
+                  )}
+
+                  {settings.telegram.botToken && (
+                    <TouchableOpacity
+                      style={[styles.actionButton, { marginTop: 8, marginBottom: 8, backgroundColor: AppColors.success + '20' }]}
+                      onPress={async () => {
+                        try {
+                          console.log('🧪 Manual bot test started...');
+
+                          const startTime = Date.now();
+                          const response = await fetch(`https://api.telegram.org/bot${settings.telegram.botToken}/getMe`, {
+                            method: 'GET',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                          });
+
+                          const responseTime = Date.now() - startTime;
+                          console.log(`📊 Manual test response time: ${responseTime}ms`);
+
+                          if (response.ok) {
+                            const data = await response.json();
+                            console.log('✅ Manual bot test successful:', data);
+                            Alert.alert(
+                              'Bot Test Successful',
+                              `Bot: @${data.result.username}\nID: ${data.result.id}\nResponse time: ${responseTime}ms`
+                            );
+                          } else {
+                            const errorText = await response.text();
+                            console.error('❌ Manual bot test failed:', errorText);
+                            Alert.alert('Bot Test Failed', `HTTP ${response.status}: ${errorText}`);
+                          }
+                        } catch (error) {
+                          console.error('❌ Manual bot test error:', error);
+                          Alert.alert('Error', `Network error: ${error.message}`);
+                        }
+                      }}
+                    >
+                      <Ionicons name="flash" size={20} color={AppColors.success} />
+                      <View style={styles.actionContent}>
+                        <Text style={[styles.actionTitle, { fontSize: 14, color: AppColors.success }]}>
+                          Test Bot Token
+                        </Text>
+                        <Text style={[styles.actionDescription, { fontSize: 12 }]}>
+                          Quick network test
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+
+                  {settings.telegram.chatId && settings.telegram.botToken && (
+                    <TouchableOpacity
+                      style={[styles.actionButton, { marginTop: 8, marginBottom: 16, backgroundColor: AppColors.text.secondary + '20' }]}
+                      onPress={async () => {
+                        try {
+                          const result = await telegramService.verifyChatId(
+                            settings.telegram.botToken,
+                            settings.telegram.chatId
+                          );
+                          if (result.success) {
+                            Alert.alert(
+                              'Verification Successful',
+                              `Connected to: ${result.chatInfo.title || result.chatInfo.username}\nType: ${result.chatInfo.type}\nID: ${result.chatInfo.id}`
+                            );
+                          } else {
+                            Alert.alert('Verification Failed', result.error || 'Unable to connect to chat');
+                          }
+                        } catch (error) {
+                          Alert.alert('Error', 'Failed to verify chat connection');
+                        }
+                      }}
+                    >
+                      <Ionicons name="checkmark-circle" size={20} color={AppColors.text.secondary} />
+                      <View style={styles.actionContent}>
+                        <Text style={[styles.actionTitle, { fontSize: 14 }]}>
+                          Verify Chat Connection
+                        </Text>
+                        <Text style={[styles.actionDescription, { fontSize: 12 }]}>
+                          Test bot and chat ID
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
                   )}
                   
                   <View style={styles.subscriptionTypeContainer}>

@@ -1283,20 +1283,6 @@ class FirebaseService {
     return settings?.telegram || null;
   }
 
-  // Public method to get Telegram settings without admin check
-  async getPublicTelegramSettings(): Promise<any> {
-    try {
-      const docSnap = await getDoc(doc(this.db, this.appSettingsCollection, 'main'));
-      if (docSnap.exists()) {
-        const data = docSnap.data() as AppSettings;
-        return data?.telegram || null;
-      }
-      return null;
-    } catch (error) {
-      console.error('Error fetching public telegram settings:', error);
-      return null;
-    }
-  }
 
   async updateTelegramSettings(telegramSettings: any): Promise<void> {
     const isAdmin = await this.isAdmin();
