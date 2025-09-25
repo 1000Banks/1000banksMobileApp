@@ -3,56 +3,101 @@
  * Based on the dark-themed fintech design inspiration
  */
 
+import { useColorScheme } from 'react-native';
+
 const primaryGold = '#F5B800';
-const backgroundDark = '#000000';
-const cardDark = '#1A1A1A';
-const textPrimary = '#FFFFFF';
-const textSecondary = '#9CA3AF';
 const successGreen = '#10B981';
 const errorRed = '#EF4444';
 
+// Light theme colors
+const lightColors = {
+  background: {
+    default: '#FFFFFF',
+    card: '#F3F4F6',
+    highlight: '#F9FAFB',
+    dark: '#1F2937', // For contrast elements in light mode
+  },
+  text: {
+    primary: '#111827',
+    secondary: '#6B7280',
+    inverse: '#FFFFFF',
+  },
+  border: '#E5E7EB',
+};
+
+// Dark theme colors
+const darkColors = {
+  background: {
+    default: '#000000',
+    card: '#1A1A1A',
+    highlight: '#2A2A2A',
+    dark: '#000000',
+  },
+  text: {
+    primary: '#FFFFFF',
+    secondary: '#9CA3AF',
+    inverse: '#111827',
+  },
+  border: '#374151',
+};
+
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#FFFFFF',
+    text: lightColors.text.primary,
+    background: lightColors.background.default,
     tint: primaryGold,
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconSelected: primaryGold,
-    card: '#F9FAFB',
-    border: '#E5E7EB',
+    card: lightColors.background.card,
+    border: lightColors.border,
     primary: primaryGold,
     success: successGreen,
     error: errorRed,
   },
   dark: {
-    text: textPrimary,
-    background: backgroundDark,
+    text: darkColors.text.primary,
+    background: darkColors.background.default,
     tint: primaryGold,
-    icon: textSecondary,
-    tabIconDefault: textSecondary,
+    icon: darkColors.text.secondary,
+    tabIconDefault: darkColors.text.secondary,
     tabIconSelected: primaryGold,
-    card: cardDark,
-    border: '#374151',
+    card: darkColors.background.card,
+    border: darkColors.border,
     primary: primaryGold,
     success: successGreen,
     error: errorRed,
   },
 };
 
-// Additional theme colors for consistency
+// Hook to get theme-aware colors
+export const useThemeColors = () => {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  return {
+    primary: primaryGold,
+    background: isDark ? darkColors.background : lightColors.background,
+    text: isDark ? darkColors.text : lightColors.text,
+    success: successGreen,
+    error: errorRed,
+    border: isDark ? darkColors.border : lightColors.border,
+    accent: {
+      success: successGreen,
+      error: errorRed,
+    },
+    isDark,
+  };
+};
+
+// Legacy export for backward compatibility - defaults to dark theme
 export const AppColors = {
   primary: primaryGold,
-  background: {
-    dark: backgroundDark,
-    card: cardDark,
-  },
-  text: {
-    primary: textPrimary,
-    secondary: textSecondary,
-  },
+  background: darkColors.background,
+  text: darkColors.text,
   success: successGreen,
   error: errorRed,
+  border: darkColors.border,
   accent: {
     success: successGreen,
     error: errorRed,

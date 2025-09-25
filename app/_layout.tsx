@@ -2,15 +2,17 @@ import { Stack } from 'expo-router';
 import { CartProvider } from '@/contexts/CartContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { UserProvider } from '@/contexts/UserContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import TelegramPollingInitializer from '@/components/TelegramPollingInitializer';
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <UserProvider>
-        <CartProvider>
-          <TelegramPollingInitializer />
-          <Stack screenOptions={{ headerShown: false }}>
+    <ThemeProvider>
+      <AuthProvider>
+        <UserProvider>
+          <CartProvider>
+            <TelegramPollingInitializer />
+            <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="auth" />
             <Stack.Screen name="sign-in" />
@@ -41,5 +43,6 @@ export default function RootLayout() {
         </CartProvider>
       </UserProvider>
     </AuthProvider>
+  </ThemeProvider>
   );
 }

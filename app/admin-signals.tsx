@@ -102,7 +102,6 @@ const AdminSignalsScreen = () => {
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [showCustomModal, setShowCustomModal] = useState(false);
-  const [showQuickSignalModal, setShowQuickSignalModal] = useState(false);
   const [customSignal, setCustomSignal] = useState({
     title: '',
     message: '',
@@ -112,7 +111,8 @@ const AdminSignalsScreen = () => {
     stopLoss: '',
     saveAsTemplate: false,
   });
-  const [quickSignalData, setQuickSignalData] = useState({
+  // Global signal data that applies to all quick signals
+  const [globalSignalData, setGlobalSignalData] = useState({
     coin: 'BTC/USDT',
     description: '',
   });
@@ -292,36 +292,40 @@ const AdminSignalsScreen = () => {
     }
   };
 
-  const handleQuickSignal = (template: SignalTemplate) => {
-    setSelectedTemplate(template);
-    setQuickSignalData({ coin: 'BTC/USDT', description: '' });
-    setShowQuickSignalModal(true);
-  };
-
-  const sendQuickSignal = async () => {
-    if (!selectedTemplate || !quickSignalData.coin.trim()) {
-      Alert.alert('Error', 'Please enter coin pair.');
+  const handleQuickSignal = async (template: SignalTemplate) => {
+    if (!globalSignalData.coin.trim()) {
+      Alert.alert('Error', 'Please enter coin pair before sending signals.');
       return;
     }
 
     // Create enhanced message with coin and description
-    let enhancedMessage = selectedTemplate.message;
+    let enhancedMessage = template.message;
 
     // Add coin information
-    enhancedMessage += `\n\n💱 COIN: ${quickSignalData.coin}`;
+    enhancedMessage += `\n\n💱 COIN: ${globalSignalData.coin}`;
 
     // Add description if provided
-    if (quickSignalData.description.trim()) {
-      enhancedMessage += `\n📋 NOTE: ${quickSignalData.description}`;
+    if (globalSignalData.description.trim()) {
+      enhancedMessage += `\n📋 NOTE: ${globalSignalData.description}`;
     }
 
     const enhancedTemplate = {
-      ...selectedTemplate,
+      ...template,
       message: enhancedMessage
     };
 
-    await sendSignal(enhancedTemplate, enhancedMessage);
-    setShowQuickSignalModal(false);
+    Alert.alert(
+      'Send Signal',
+      `Send "${template.title}" for ${globalSignalData.coin} to ${subscriberCount} subscriber${subscriberCount !== 1 ? 's' : ''}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send',
+          onPress: () => sendSignal(enhancedTemplate, enhancedMessage),
+          style: 'default'
+        }
+      ]
+    );
   };
 
   const handleCustomSignal = () => {
@@ -440,6 +444,38 @@ const AdminSignalsScreen = () => {
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Coin and Description Input Section */}
+        <View style={styles.inputSection}>
+          <Text style={styles.sectionTitle}>Signal Configuration</Text>
+          <Text style={styles.sectionSubtitle}>These values will be included in all quick signals</Text>
+
+          <View style={styles.inputRow}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Coin/Pair *</Text>
+              <TextInput
+                style={styles.mainInput}
+                placeholder="e.g., BTC/USDT, ETH/USDT"
+                placeholderTextColor={AppColors.text.secondary}
+                value={globalSignalData.coin}
+                onChangeText={(text) => setGlobalSignalData({ ...globalSignalData, coin: text })}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Additional Notes (Optional)</Text>
+            <TextInput
+              style={[styles.mainInput, styles.descriptionInput]}
+              placeholder="Add context or details that apply to all signals..."
+              placeholderTextColor={AppColors.text.secondary}
+              value={globalSignalData.description}
+              onChangeText={(text) => setGlobalSignalData({ ...globalSignalData, description: text })}
+              multiline
+              numberOfLines={2}
+            />
+          </View>
+        </View>
+
         {/* Subscriber Count Card */}
         <View style={styles.statsCard}>
           <View style={styles.statItem}>
@@ -523,79 +559,6 @@ const AdminSignalsScreen = () => {
           </View>
         </View>
       </ScrollView>
-
-      {/* Quick Signal Modal */}
-      <Modal
-        visible={showQuickSignalModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowQuickSignalModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {selectedTemplate?.title} - Quick Send
-              </Text>
-              <TouchableOpacity onPress={() => setShowQuickSignalModal(false)}>
-                <Ionicons name="close" size={24} color={AppColors.text.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>Coin/Pair *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., BTC/USDT, ETH/USDT"
-                placeholderTextColor={AppColors.text.secondary}
-                value={quickSignalData.coin}
-                onChangeText={(text) => setQuickSignalData({ ...quickSignalData, coin: text })}
-              />
-
-              <Text style={styles.inputLabel}>Additional Notes (Optional)</Text>
-              <TextInput
-                style={[styles.input, styles.messageInput]}
-                placeholder="Add any specific details..."
-                placeholderTextColor={AppColors.text.secondary}
-                value={quickSignalData.description}
-                onChangeText={(text) => setQuickSignalData({ ...quickSignalData, description: text })}
-                multiline
-                numberOfLines={3}
-              />
-
-              <View style={styles.previewContainer}>
-                <Text style={styles.previewLabel}>Preview:</Text>
-                <Text style={styles.previewText}>
-                  {selectedTemplate?.message}
-                  {quickSignalData.coin && `\n\n💱 COIN: ${quickSignalData.coin}`}
-                  {quickSignalData.description && `\n📋 NOTE: ${quickSignalData.description}`}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowQuickSignalModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.sendButton]}
-                onPress={sendQuickSignal}
-                disabled={sending}
-              >
-                {sending ? (
-                  <ActivityIndicator size="small" color={AppColors.background.dark} />
-                ) : (
-                  <Text style={styles.sendButtonText}>Send Signal</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       {/* Custom Signal Modal */}
       <Modal
@@ -1014,6 +977,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: AppColors.text.primary,
     marginLeft: 8,
+  },
+  inputSection: {
+    backgroundColor: AppColors.background.card,
+    margin: 16,
+    padding: 20,
+    borderRadius: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+  },
+  inputRow: {
+    marginBottom: 16,
+  },
+  inputContainer: {
+    marginBottom: 12,
+  },
+  mainInput: {
+    backgroundColor: AppColors.background.default,
+    borderWidth: 1,
+    borderColor: AppColors.text.secondary + '30',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: AppColors.text.primary,
+  },
+  descriptionInput: {
+    minHeight: 60,
+    textAlignVertical: 'top',
   },
 });
 
