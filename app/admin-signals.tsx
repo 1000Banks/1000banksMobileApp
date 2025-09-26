@@ -333,12 +333,7 @@ const AdminSignalsScreen = () => {
     setSelectedTemplate(signalTemplates.find(t => t.id === 'market_update') || signalTemplates[0]);
   };
 
-  const sendCustomSignal = async () => {
-    if (!customSignal.title.trim() || !customSignal.message.trim()) {
-      Alert.alert('Error', 'Please enter both title and message.');
-      return;
-    }
-
+  const buildCustomSignalMessage = () => {
     let detailedMessage = customSignal.message;
 
     // Add trading details if provided
@@ -350,8 +345,18 @@ const AdminSignalsScreen = () => {
       if (customSignal.stopLoss) detailedMessage += `\n• Stop Loss: $${customSignal.stopLoss}`;
     }
 
+    return detailedMessage;
+  };
+
+  const saveCustomSignalTemplate = async () => {
+    if (!customSignal.title.trim() || !customSignal.message.trim()) {
+      Alert.alert('Error', 'Please enter both title and message.');
+      return;
+    }
+
+    const detailedMessage = buildCustomSignalMessage();
     const customTemplate: SignalTemplate = {
-      id: customSignal.saveAsTemplate ? `custom_${Date.now()}` : 'custom',
+      id: `custom_${Date.now()}`,
       title: customSignal.title,
       icon: 'megaphone',
       color: '#673AB7',
@@ -359,17 +364,84 @@ const AdminSignalsScreen = () => {
       type: 'custom'
     };
 
-    // Save as template if requested
-    if (customSignal.saveAsTemplate) {
-      const result = await saveCustomTemplate(customTemplate);
-      if (result.success) {
-        Alert.alert('Success', 'Template saved and signal sent!');
-      } else {
-        Alert.alert('Warning', 'Signal sent but failed to save template.');
-      }
+    const result = await saveCustomTemplate(customTemplate);
+    if (result.success) {
+      Alert.alert('Success', 'Template saved successfully!');
+      // Reset form after successful save
+      setCustomSignal({
+        title: '',
+        message: '',
+        coin: 'BTC',
+        price: '',
+        target: '',
+        stopLoss: '',
+        saveAsTemplate: false,
+      });
+      setShowCustomModal(false);
+    } else {
+      Alert.alert('Error', 'Failed to save template.');
+    }
+  };
+
+  const sendCustomSignal = async () => {
+    if (!customSignal.title.trim() || !customSignal.message.trim()) {
+      Alert.alert('Error', 'Please enter both title and message.');
+      return;
     }
 
+    const detailedMessage = buildCustomSignalMessage();
+    const customTemplate: SignalTemplate = {
+      id: 'custom',
+      title: customSignal.title,
+      icon: 'megaphone',
+      color: '#673AB7',
+      message: detailedMessage,
+      type: 'custom'
+    };
+
     await sendSignal(customTemplate, detailedMessage);
+    setShowCustomModal(false);
+
+    // Reset form after sending
+    setCustomSignal({
+      title: '',
+      message: '',
+      coin: 'BTC',
+      price: '',
+      target: '',
+      stopLoss: '',
+      saveAsTemplate: false,
+    });
+  };
+
+  const sendAndSaveCustomSignal = async () => {
+    if (!customSignal.title.trim() || !customSignal.message.trim()) {
+      Alert.alert('Error', 'Please enter both title and message.');
+      return;
+    }
+
+    const detailedMessage = buildCustomSignalMessage();
+    const customTemplate: SignalTemplate = {
+      id: `custom_${Date.now()}`,
+      title: customSignal.title,
+      icon: 'megaphone',
+      color: '#673AB7',
+      message: detailedMessage,
+      type: 'custom'
+    };
+
+    // Save template first
+    const saveResult = await saveCustomTemplate(customTemplate);
+
+    // Send signal
+    await sendSignal(customTemplate, detailedMessage);
+
+    if (saveResult.success) {
+      Alert.alert('Success', 'Template saved and signal sent!');
+    } else {
+      Alert.alert('Warning', 'Signal sent but failed to save template.');
+    }
+
     setShowCustomModal(false);
 
     // Reset form
@@ -650,39 +722,49 @@ const AdminSignalsScreen = () => {
                 </View>
               </View>
 
-              <View style={styles.checkboxContainer}>
-                <TouchableOpacity
-                  style={styles.checkbox}
-                  onPress={() => setCustomSignal({ ...customSignal, saveAsTemplate: !customSignal.saveAsTemplate })}
-                >
-                  <Ionicons
-                    name={customSignal.saveAsTemplate ? "checkbox" : "checkbox-outline"}
-                    size={24}
-                    color={customSignal.saveAsTemplate ? AppColors.primary : AppColors.text.secondary}
-                  />
-                  <Text style={styles.checkboxText}>Save as reusable template</Text>
-                </TouchableOpacity>
-              </View>
             </ScrollView>
 
             <View style={styles.modalFooter}>
+              <View style={styles.modalButtonRow}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton]}
+                  onPress={saveCustomSignalTemplate}
+                  disabled={sending}
+                >
+                  <Ionicons name="save-outline" size={20} color={AppColors.text.primary} />
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.sendButton]}
+                  onPress={sendCustomSignal}
+                  disabled={sending}
+                >
+                  {sending ? (
+                    <ActivityIndicator size="small" color={AppColors.background.dark} />
+                  ) : (
+                    <>
+                      <Ionicons name="send-outline" size={20} color={AppColors.background.dark} />
+                      <Text style={styles.sendButtonText}>Send</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.sendSaveButton]}
+                  onPress={sendAndSaveCustomSignal}
+                  disabled={sending}
+                >
+                  <Ionicons name="checkmark-done" size={20} color={AppColors.text.primary} />
+                  <Text style={styles.sendSaveButtonText}>Both</Text>
+                </TouchableOpacity>
+              </View>
+
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setShowCustomModal(false)}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.sendButton]}
-                onPress={sendCustomSignal}
-                disabled={sending}
-              >
-                {sending ? (
-                  <ActivityIndicator size="small" color={AppColors.background.dark} />
-                ) : (
-                  <Text style={styles.sendButtonText}>Send Signal</Text>
-                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -883,34 +965,60 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   modalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: AppColors.text.secondary + '20',
   },
+  modalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
   modalButton: {
     flex: 1,
-    padding: 16,
+    flexDirection: 'row',
+    padding: 14,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     marginHorizontal: 4,
+    gap: 6,
   },
   cancelButton: {
     backgroundColor: AppColors.background.default,
+    borderWidth: 1,
+    borderColor: AppColors.text.secondary + '30',
+  },
+  saveButton: {
+    backgroundColor: AppColors.background.card,
+    borderWidth: 1,
+    borderColor: AppColors.primary,
   },
   sendButton: {
     backgroundColor: AppColors.primary,
   },
+  sendSaveButton: {
+    backgroundColor: AppColors.success,
+  },
   cancelButtonText: {
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '600',
+    color: AppColors.text.primary,
+  },
+  saveButtonText: {
+    fontSize: 14,
     fontWeight: '600',
     color: AppColors.text.primary,
   },
   sendButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     color: AppColors.background.dark,
+  },
+  sendSaveButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: AppColors.text.primary,
   },
   headerActions: {
     flexDirection: 'row',
@@ -964,19 +1072,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: AppColors.text.primary,
     lineHeight: 20,
-  },
-  checkboxContainer: {
-    marginTop: 16,
-  },
-  checkbox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  checkboxText: {
-    fontSize: 14,
-    color: AppColors.text.primary,
-    marginLeft: 8,
   },
   inputSection: {
     backgroundColor: AppColors.background.card,

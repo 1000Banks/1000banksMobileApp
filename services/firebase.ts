@@ -212,6 +212,10 @@ class FirebaseService {
     await setDoc(doc(this.db, this.usersCollection, currentUser.uid), userData);
   }
 
+  getCurrentUser() {
+    return this.auth.currentUser;
+  }
+
   async getUserProfile(uid?: string): Promise<User | null> {
     const userId = uid || this.auth.currentUser?.uid;
     if (!userId) return null;
@@ -1108,8 +1112,17 @@ class FirebaseService {
     // In a real implementation, this would clear various caches
     // For now, we'll just simulate the action
     console.log('Clearing cache...');
-    
+
     await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  async deleteDocument(collectionName: string, docId: string): Promise<void> {
+    try {
+      await deleteDoc(doc(this.db, collectionName, docId));
+    } catch (error) {
+      console.error(`Error deleting document from ${collectionName}:`, error);
+      throw error;
+    }
   }
 
   // Data Export Functions
